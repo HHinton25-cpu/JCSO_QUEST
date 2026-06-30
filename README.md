@@ -48,3 +48,14 @@ After uploading, test with one host tab and at least two player tabs.
 ## Blend fix update
 
 This build replaces the Gold Rush PNG art with transparent-background versions and cache-busts the image references so mobile browsers do not keep showing the old square/checkerboard backgrounds.
+
+## Cadet Race asset update
+
+- Integrated the custom Cadet Race gameplay assets into the player reward cards, opening screen, result screen, and host race board.
+- Added transparent-background versions of:
+  - `jcso-race-track-md.png`
+  - `jcso-race-car-md.png`
+  - `jcso-patrol-unit-md.png`
+- Replaced generic route-card emoji UI with polished race cards.
+- Updated the host race board to show a race arena and patrol car progress markers.
+- Increased Cadet Race distance goal options up to 5,000 ft.

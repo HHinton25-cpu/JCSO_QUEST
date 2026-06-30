@@ -27,10 +27,15 @@ let lastRevealAudioKey = '';
 let lastRevealAnimationKey = '';
 let lastEndedAudioKey = '';
 
-const RACE_FINISH_DISTANCE = 120;
+const RACE_FINISH_DISTANCE = 500;
 const BATTLE_START_HEALTH = 100;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
-const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 120, 'power-battle': 500 };
+const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 500 };
+const RACE_IMAGES = {
+  track: 'jcso-race-track-md.png?v=20260630-race-assets-v1',
+  car: 'jcso-race-car-md.png?v=20260630-race-assets-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-race-assets-v1'
+};
 let processingRewardRequests = new Set();
 let endingInProgress = false;
 
@@ -196,7 +201,7 @@ function renderGameModeOptions() {
   };
   const options = {
     'coin-rush': [2000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000],
-    'cadet-race': [80, 120, 160, 200, 250, 300],
+    'cadet-race': [250, 500, 750, 1000, 1500, 2500, 5000],
     'power-battle': [250, 500, 750, 1000, 1500, 2000]
   };
   els.goalLimitLabel.textContent = labels[modeId] || 'Goal limit';
@@ -517,13 +522,16 @@ function renderSelfPacedModeStatus(game, container) {
   }
   if (mode.id === 'cadet-race') {
     container.innerHTML = `
-      <div class="mode-objective"><strong>🏁 Cadet Race</strong><span>Players pick one of three route cards after each correct answer.</span></div>
-      <div class="race-board">
-        ${players.map(p => {
-          const distance = LQ.clamp(Number(p.distance || 0), 0, goal);
-          const percent = (distance / Math.max(1, goal)) * 100;
-          return `<div class="race-lane"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="race-track"><span style="width:${percent}%"></span><em style="left:${percent}%">🚓</em></div><small>${LQ.formatScore(distance)} / ${LQ.formatScore(goal)} ft</small></div>`;
-        }).join('') || '<span class="muted">No racers yet.</span>'}
+      <div class="mode-objective race-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Players choose route cards after correct answers and race patrol units to the finish.</span></div>
+      <div class="race-arena">
+        <img class="race-board-art" src="${RACE_IMAGES.track}" alt="Cadet Race track" loading="lazy" decoding="async" />
+        <div class="race-board race-board-polished">
+          ${players.map(p => {
+            const distance = LQ.clamp(Number(p.distance || 0), 0, goal);
+            const percent = (distance / Math.max(1, goal)) * 100;
+            return `<div class="race-lane race-lane-polished"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="race-track"><span style="width:${percent}%"></span><em style="left:${percent}%"><img src="${RACE_IMAGES.car}" alt="race car"></em></div><small>${LQ.formatScore(distance)} / ${LQ.formatScore(goal)} ft</small></div>`;
+          }).join('') || '<span class="muted">No racers yet.</span>'}
+        </div>
       </div>
     `;
     return;

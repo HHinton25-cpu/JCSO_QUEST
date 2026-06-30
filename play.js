@@ -25,16 +25,22 @@ let localChestQuestionKey = '';
 let localChestChoiceIndex = -1;
 let rewardSubmitInProgress = false;
 
-const RACE_FINISH_DISTANCE = 120;
+const RACE_FINISH_DISTANCE = 500;
 const BATTLE_START_HEALTH = 100;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-blendfix-v5',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-blendfix-v5',
-  open: 'gold-rush-chest-open-md.png?v=20260630-blendfix-v5',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-blendfix-v5',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-blendfix-v5',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-blendfix-v5'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-race-assets-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-race-assets-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-race-assets-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-race-assets-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-race-assets-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-race-assets-v1'
+};
+
+const RACE_IMAGES = {
+  track: 'jcso-race-track-md.png?v=20260630-race-assets-v1',
+  car: 'jcso-race-car-md.png?v=20260630-race-assets-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-race-assets-v1'
 };
 
 const els = {};
@@ -229,7 +235,7 @@ function renderFromGame(game) {
 }
 
 function renderLobby(game) {
-  document.body.classList.remove('gold-rush-play');
+  document.body.classList.remove('gold-rush-play', 'race-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const avatar = LQ.getAvatar(me.avatarId || selectedAvatarId);
@@ -242,7 +248,7 @@ function renderLobby(game) {
 }
 
 function renderQuestion(game) {
-  document.body.classList.remove('gold-rush-play');
+  document.body.classList.remove('gold-rush-play', 'race-play');
   const q = game.question || {};
   const state = game.state || {};
   const me = game.players?.[uid] || {};
@@ -350,6 +356,7 @@ function renderSelfPacedPlay(game) {
   cleanupTimer();
   const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
   document.body.classList.toggle('gold-rush-play', mode.id === 'coin-rush');
+  document.body.classList.toggle('race-play', mode.id === 'cadet-race');
   const me = game.players?.[uid] || {};
   const questionBank = game.questionBank || [];
   if (!questionBank.length) {
@@ -496,13 +503,14 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
       ? 'Pick one of the three route cards. It can move you forward, boost you, swap positions, or slow you down.'
       : 'Pick one of the three tactical crates. It can add power, shield you, heal you, steal power, or overload.';
   els.chestPanel.innerHTML = `
-    <div class="chest-intro ${modeId === 'coin-rush' ? 'gold-rush-chest-intro' : ''}">
+    <div class="chest-intro ${modeId === 'coin-rush' ? 'gold-rush-chest-intro' : modeId === 'cadet-race' ? 'race-card-intro' : ''}">
       <p class="eyebrow">Correct answer</p>
-      ${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : ''}
+      ${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : ''}
+      ${modeId === 'cadet-race' ? assetImage(RACE_IMAGES.track, 'Cadet Race track', 'race-intro-track') : ''}
       <h2>${LQ.escapeHtml(title)}</h2>
       <p>${LQ.escapeHtml(subtitle)}</p>
     </div>
-    <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : ''}">
+    <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : modeId === 'cadet-race' ? 'race-route-grid' : ''}">
       ${[0, 1, 2].map(i => renderRewardChoiceButton(modeId, questionIndex, choiceIndex, i)).join('')}
     </div>
   `;
@@ -523,8 +531,24 @@ function renderRewardChoiceButton(modeId, questionIndex, choiceIndex, chestIndex
       </button>
     `;
   }
-  const label = modeId === 'cadet-race' ? 'Route' : 'Crate';
-  const icon = modeId === 'cadet-race' ? '🏁' : '🛡️';
+  if (modeId === 'cadet-race') {
+    const routes = [
+      { title: 'Patrol Route', img: RACE_IMAGES.track, alt: 'Race track route' },
+      { title: 'Siren Sprint', img: RACE_IMAGES.car, alt: 'Race car route' },
+      { title: 'Unit Move', img: RACE_IMAGES.patrol, alt: 'Patrol unit route' }
+    ];
+    const route = routes[chestIndex % routes.length];
+    return `
+      <button type="button" class="chest-choice race-route-choice" data-chest-index="${chestIndex}" aria-label="Choose ${route.title}">
+        <span class="race-card-sheen" aria-hidden="true"></span>
+        ${assetImage(route.img, route.alt, 'race-route-img')}
+        <strong>${route.title}</strong>
+        <small>Tap to drive</small>
+      </button>
+    `;
+  }
+  const label = 'Crate';
+  const icon = '🛡️';
   return `<button type="button" class="chest-choice" data-chest-index="${chestIndex}"><span>${icon}</span><strong>${label} ${chestIndex + 1}</strong><small>Mystery reward</small></button>`;
 }
 
@@ -535,7 +559,8 @@ function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
 }
 
 function assetImage(src, alt, className) {
-  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-blendfix-v5" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-race-assets-v1`;
+  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
 function seededUnit(seed) {
@@ -556,7 +581,12 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
   localChestQuestionKey = '';
   localChestChoiceIndex = -1;
   if (els.chestPanel) {
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art gold-rush-opening">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}<div class="loader small-loader"></div><h2>Opening chest…</h2><p>Gold Rush is resolving your reward.</p></div>`;
+    const modeId = liveGame.settings?.gameMode || 'coin-rush';
+    const openingClass = modeId === 'cadet-race' ? 'race-opening' : modeId === 'coin-rush' ? 'gold-rush-opening' : '';
+    const openingLogo = modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : '';
+    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : '<div class="loader small-loader"></div>';
+    const openingText = modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Gold Rush is resolving your reward.';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${openingClass}">${openingLogo}${openingArt}<h2>Opening reward…</h2><p>${openingText}</p></div>`;
   }
   try {
     await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
@@ -582,8 +612,12 @@ function renderOpeningReward(modeId) {
   if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
   if (els.chestPanel) {
     els.chestPanel.classList.remove('hidden');
-    const art = modeId === 'coin-rush' ? assetImage(GOLD_RUSH_IMAGES.open, 'Opening chest', 'opening-chest-img') : '<div class="loader small-loader"></div>';
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'coin-rush' ? 'gold-rush-opening' : ''}">${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your Gold Rush chest is being opened.' : 'Your game reward is being resolved.'}</p></div>`;
+    const art = modeId === 'coin-rush'
+      ? assetImage(GOLD_RUSH_IMAGES.open, 'Opening chest', 'opening-chest-img')
+      : modeId === 'cadet-race'
+        ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img')
+        : '<div class="loader small-loader"></div>';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'coin-rush' ? 'gold-rush-opening' : modeId === 'cadet-race' ? 'race-opening' : ''}">${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your Gold Rush chest is being opened.' : modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Your game reward is being resolved.'}</p></div>`;
   }
   LQ.setStatus(els.answerStatus, 'Opening reward…', '');
 }
@@ -593,12 +627,12 @@ function renderSelfPacedResult(player, modeId) {
   const correct = Boolean(player.lastCorrect);
   const gain = formatPlayerGain(player, modeId);
   const rewardType = String(player.lastRewardType || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const cardClass = `${correct ? 'self-result-card' : 'self-result-card wrong'} ${modeId === 'coin-rush' ? 'gold-rush-result-card' : ''} reward-${rewardType || 'none'}`;
+  const cardClass = `${correct ? 'self-result-card' : 'self-result-card wrong'} ${modeId === 'coin-rush' ? 'gold-rush-result-card' : modeId === 'cadet-race' ? 'race-result-card' : ''} reward-${rewardType || 'none'}`;
   if (els.chestPanel) {
     els.chestPanel.classList.remove('hidden');
     els.chestPanel.innerHTML = `
       <div class="${cardClass}">
-        ${modeId === 'coin-rush' ? `<div class="result-mode-brand">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>` : ''}
+        ${modeId === 'coin-rush' ? `<div class="result-mode-brand">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>` : modeId === 'cadet-race' ? `<div class="result-mode-brand">${LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo')}</div>` : ''}
         <div class="result-icon mode-result-icon">${resultArtForMode(correct, modeId, player)}</div>
         <p class="eyebrow">${correct ? 'Chest result' : 'No reward'}</p>
         <h2>${LQ.escapeHtml(gain.label || '')}</h2>
@@ -628,7 +662,7 @@ async function nextSelfPacedQuestion() {
 }
 
 function renderReveal(game) {
-  document.body.classList.remove('gold-rush-play');
+  document.body.classList.remove('gold-rush-play', 'race-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const reveal = game.reveal || {};
@@ -674,7 +708,7 @@ function renderReveal(game) {
 }
 
 function renderEnded(game) {
-  document.body.classList.remove('gold-rush-play');
+  document.body.classList.remove('gold-rush-play', 'race-play');
   cleanupTimer();
   const endedKey = `${game.state?.endedAt || 'ended'}`;
   if (endedKey !== lastEndedAudioKey) {
@@ -748,13 +782,24 @@ function formatRevealModeEvent(player, modeId) {
 }
 
 function resultArtForMode(correct, modeId, player) {
-  if (modeId !== 'coin-rush' || !correct) return resultIconForMode(correct, modeId, player);
-  const type = String(player.lastRewardType || '').toLowerCase();
-  let image = GOLD_RUSH_IMAGES.coins;
-  if (type === 'triple' || type === 'jackpot') image = GOLD_RUSH_IMAGES.gems;
-  if (type === 'loss-percent' || type === 'trap') image = GOLD_RUSH_IMAGES.open;
-  if (type === 'steal-percent' || type === 'steal-empty' || type === 'steal' || type === 'raid-percent' || type === 'raid') image = GOLD_RUSH_IMAGES.vault;
-  return assetImage(image, 'Chest reward', 'result-art-img');
+  if (modeId === 'coin-rush' && correct) {
+    const type = String(player.lastRewardType || '').toLowerCase();
+    let image = GOLD_RUSH_IMAGES.coins;
+    if (type === 'triple' || type === 'jackpot') image = GOLD_RUSH_IMAGES.gems;
+    if (type === 'loss-percent' || type === 'trap') image = GOLD_RUSH_IMAGES.open;
+    if (type === 'steal-percent' || type === 'steal-empty' || type === 'steal' || type === 'raid-percent' || type === 'raid') image = GOLD_RUSH_IMAGES.vault;
+    return assetImage(image, 'Chest reward', 'result-art-img');
+  }
+  if (modeId === 'cadet-race' && correct) {
+    const type = String(player.lastRewardType || '').toLowerCase();
+    let image = RACE_IMAGES.car;
+    if (type === 'roll') image = RACE_IMAGES.patrol;
+    if (type === 'roadblock') image = RACE_IMAGES.track;
+    if (type === 'swap') image = RACE_IMAGES.track;
+    if (type === 'sprint' || type === 'boost' || type === 'shortcut') image = RACE_IMAGES.car;
+    return assetImage(image, 'Cadet Race result', 'result-art-img race-result-art');
+  }
+  return resultIconForMode(correct, modeId, player);
 }
 
 function resultIconForMode(correct, modeId, player) {
