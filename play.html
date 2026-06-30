@@ -4,37 +4,37 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Join JCSO Quest</title>
-  <meta name="description" content="Player screen for JCSO Quest." />
-  <link rel="icon" href="favicon.ico?v=20260630-avatarfix" sizes="any" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-avatarfix" />
+  <meta name="description" content="Join a live JCSO Quest game." />
+  <link rel="icon" href="favicon.ico?v=20260630-clean-v1" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-clean-v1" />
   <meta name="theme-color" content="#062B72" />
-  <link rel="stylesheet" href="styles.css?v=20260630-avatarfix" />
+  <link rel="stylesheet" href="styles.css?v=20260630-clean-v1" />
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
   <main id="app" class="player-shell">
     <section class="screen active" id="join-screen">
-      <div class="hero-card compact join-card">
+      <div class="hero-card compact join-card polished-join-card">
         <div class="brand-row">
-          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-avatarfix" alt="" /></span>
+          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-clean-v1" alt="" /></span>
           <div>
-            <p class="eyebrow">Player Screen</p>
-            <h1>Join JCSO Quest</h1>
+            <p class="eyebrow">Player</p>
+            <h1>Join Game</h1>
           </div>
         </div>
 
         <div id="firebase-warning" class="notice hidden">
-          Firebase is not configured yet. The host needs to paste Firebase settings into <code>firebase-config.js</code> first.
+          The live game connection is not ready yet. Please ask the host to check setup.
         </div>
 
         <label for="pin-input">Game PIN</label>
         <input id="pin-input" class="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="000000" autocomplete="one-time-code" />
 
-        <label for="name-input">Your name</label>
-        <input id="name-input" maxlength="24" placeholder="Nickname" autocomplete="name" />
+        <label for="name-input">Name</label>
+        <input id="name-input" maxlength="24" placeholder="Enter your name" autocomplete="name" />
 
-        <label>Choose your avatar</label>
-        <div id="avatar-select" class="avatar-select" role="listbox" aria-label="Choose your avatar"></div>
+        <label>Choose your character</label>
+        <div id="avatar-select" class="avatar-select" role="listbox" aria-label="Choose your character"></div>
 
         <button class="primary-btn jumbo" id="join-game" type="button">Join Game</button>
         <p id="join-status" class="status small"></p>
@@ -43,7 +43,7 @@
 
     <section class="screen" id="lobby-screen">
       <div class="player-card waiting-card">
-        <div class="big-avatar" id="lobby-avatar"><img class="avatar-img large-avatar-img" src="./patrol_pals.svg?v=20260630-avatarfix" alt="Patrol Pals"></div>
+        <div class="big-avatar" id="lobby-avatar"><img class="avatar-img large-avatar-img" src="./patrol_pals.svg?v=20260630-clean-v1" alt="Patrol Pals"></div>
         <div class="pulse-dot"></div>
         <p class="eyebrow">You’re in</p>
         <h1 id="lobby-name">Player</h1>
@@ -76,7 +76,7 @@
       <div class="player-card waiting-card">
         <div class="loader small-loader"></div>
         <p class="eyebrow">Answer sent</p>
-        <h1>Waiting for everyone else…</h1>
+        <h1>Waiting for the reveal…</h1>
         <p id="answered-score">Score: 0</p>
       </div>
     </section>
@@ -107,7 +107,7 @@
     </section>
   </main>
 
-  <script src="common.js?v=20260630-avatarfix"></script>
-  <script type="module" src="play.js?v=20260630-avatarfix"></script>
+  <script src="common.js?v=20260630-clean-v1"></script>
+  <script type="module" src="play.js?v=20260630-clean-v1"></script>
 </body>
 </html>

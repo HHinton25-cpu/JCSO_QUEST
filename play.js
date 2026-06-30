@@ -22,6 +22,9 @@ let lastRevealAudioKey = '';
 let lastGainAnimationKey = '';
 let lastEndedAudioKey = '';
 
+const RACE_FINISH_DISTANCE = 120;
+const BATTLE_START_HEALTH = 100;
+
 const els = {};
 
 document.addEventListener('DOMContentLoaded', init);
@@ -40,7 +43,7 @@ async function init() {
   } catch (err) {
     console.error(err);
     els.firebaseWarning.classList.remove('hidden');
-    LQ.setStatus(els.joinStatus, 'Firebase is not configured yet. Ask the host to finish setup.', 'error');
+    LQ.setStatus(els.joinStatus, 'The live game connection is not ready yet.', 'error');
   }
 }
 
@@ -138,6 +141,9 @@ async function joinGame() {
     coins: 0,
     distance: 0,
     power: 0,
+    damage: 0,
+    shield: 0,
+    health: BATTLE_START_HEALTH,
     correct: 0,
     answered: 0,
     played: 0,
@@ -146,6 +152,9 @@ async function joinGame() {
     lastCoins: 0,
     lastDistance: 0,
     lastPower: 0,
+    lastDamage: 0,
+    lastHealthChange: 0,
+    lastShield: 0,
     lastModeLabel: '',
     lastCorrect: false,
     lastChoiceIndex: -1,
@@ -221,12 +230,12 @@ function renderQuestion(game) {
 
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
   els.playerRound.textContent = `Question ${Number(state.questionIndex || 0) + 1} / ${Number(state.questionCount || 0)}`;
-  els.playerScore.textContent = `${LQ.formatScore(me.score)} pts`;
+  els.playerScore.textContent = formatMainPlayerStat(me, mode.id);
   if (els.playerMode) els.playerMode.textContent = `${mode.icon} ${mode.shortName || mode.name}`;
   if (els.playerCoins) els.playerCoins.textContent = formatPlayerModeStat(me, mode.id);
   els.playerCategory.textContent = q.category || 'Category';
   els.playerQuestion.textContent = q.text || 'Pick your answer';
-  els.answeredScore.textContent = `Score: ${LQ.formatScore(me.score)} pts · ${formatPlayerModeStat(me, mode.id)}`;
+  els.answeredScore.textContent = `${formatMainPlayerStat(me, mode.id)} · ${formatPlayerModeStat(me, mode.id)}`;
 
   if (!eligible) {
     LQ.setStatus(els.answerStatus, 'You joined during this question. You will be able to answer the next one.', '');
@@ -316,20 +325,20 @@ function renderReveal(game) {
   const me = game.players?.[uid] || {};
   const reveal = game.reveal || {};
   const correct = Boolean(me.lastCorrect);
-  const ranked = LQ.rankPlayers(game.players || {});
-  const rank = ranked.findIndex(p => p.uid === uid) + 1;
-
-  els.playerResultCard.classList.toggle('wrong', !correct);
-  els.playerResultIcon.textContent = correct ? '✓' : '×';
-  els.playerResultLabel.textContent = correct ? 'Correct!' : 'Not this time';
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
+  const ranked = rankPlayersForMode(game.players || {}, mode.id);
+  const rank = ranked.findIndex(p => p.uid === uid) + 1;
+  const gainInfo = formatPlayerGain(me, mode.id);
+
+  els.playerResultCard.classList.toggle('wrong', !correct && Number(me.lastGain || 0) <= 0);
+  els.playerResultIcon.textContent = resultIconForMode(correct, mode.id, me);
+  els.playerResultLabel.textContent = resultLabelForMode(correct, mode.id, me);
   els.playerCorrectAnswer.textContent = `Correct answer: ${reveal.correctAnswer || ''}`;
   if (els.playerModeEvent) els.playerModeEvent.textContent = formatRevealModeEvent(me, mode.id);
   if (els.playerExplanation) els.playerExplanation.textContent = reveal.explanation || '';
   els.playerRank.textContent = rank ? `Rank ${rank}` : 'Rank —';
 
-  const gain = Number(me.lastGain || 0);
-  const total = Number(me.score || 0);
+  const gain = Number(gainInfo.value || 0);
   const revealKey = `${game.question?.key || ''}_${reveal.revealedAt || ''}`;
   const shouldAnimate = revealKey && revealKey !== lastGainAnimationKey;
 
@@ -339,23 +348,19 @@ function renderReveal(game) {
     LQ.Sounds.countUp();
   }
 
-  if (shouldAnimate) {
+  if (shouldAnimate && gain > 0) {
     lastGainAnimationKey = revealKey;
     LQ.animateNumber(els.playerGain, 0, gain, {
       prefix: '+',
-      suffix: ' pts',
-      duration: 1000,
-      onTick: () => LQ.Sounds.pointsTick()
-    });
-    LQ.animateNumber(els.playerTotalScore, Math.max(0, total - gain), total, {
-      suffix: ' pts',
+      suffix: gainInfo.suffix,
       duration: 1000,
       onTick: () => LQ.Sounds.pointsTick()
     });
   } else {
-    els.playerGain.textContent = `+${LQ.formatScore(gain)} pts`;
-    els.playerTotalScore.textContent = `${LQ.formatScore(total)} pts`;
+    if (shouldAnimate) lastGainAnimationKey = revealKey;
+    els.playerGain.textContent = gainInfo.label;
   }
+  els.playerTotalScore.textContent = formatMainPlayerStat(me, mode.id);
 
   LQ.showScreen('reveal');
 }
@@ -367,39 +372,110 @@ function renderEnded(game) {
     lastEndedAudioKey = endedKey;
     LQ.Sounds.victory();
   }
-  const ranked = LQ.rankPlayers(game.players || {});
+  const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
+  const ranked = rankPlayersForMode(game.players || {}, mode.id);
   const myRank = ranked.findIndex(p => p.uid === uid) + 1;
   els.finalPlayerTitle.textContent = myRank ? `You finished #${myRank}` : 'Game ended';
-  const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
-  els.playerFinalList.innerHTML = ranked.slice(0, 10).map((p, i) => {
-    const avatar = LQ.getAvatar(p.avatarId);
-    return `
+  els.playerFinalList.innerHTML = ranked.slice(0, 10).map((p, i) => `
       <div class="leader-row ${p.uid === uid ? 'mine' : ''}">
         <div class="rank-wrap"><div class="rank">${i + 1}</div><div class="leader-avatar">${LQ.avatarMarkup(p, 'avatar-img')}</div></div>
         <div class="leader-name">
           <strong>${LQ.escapeHtml(p.name || 'Player')}</strong>
           <span>${Number(p.correct || 0)} correct · ${formatPlayerModeStat(p, mode.id)}</span>
         </div>
-        <div class="leader-score">${LQ.formatScore(p.score)} pts</div>
+        <div class="leader-score">${formatMainPlayerStat(p, mode.id)}</div>
       </div>
-    `;
-  }).join('');
+    `).join('');
   LQ.showScreen('ended');
 }
 
-function formatPlayerModeStat(player, modeId) {
-  if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} coins`;
+function formatMainPlayerStat(player, modeId) {
+  if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
+function formatPlayerModeStat(player, modeId) {
+  if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold in vault`;
+  if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} / ${RACE_FINISH_DISTANCE} ft`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.shield || 0)} shield · ${LQ.formatScore(player.damage || 0)} dmg`;
+  return `${LQ.formatScore(player.score || 0)} pts`;
+}
+
+function formatPlayerGain(player, modeId) {
+  if (modeId === 'coin-rush') {
+    const delta = Number(player.lastCoins || 0);
+    return { value: delta, suffix: ' gold', label: `${formatSigned(delta)} gold` };
+  }
+  if (modeId === 'cadet-race') {
+    const delta = Number(player.lastDistance || 0);
+    return { value: delta, suffix: ' ft', label: `${formatSigned(delta)} ft` };
+  }
+  if (modeId === 'power-battle') {
+    const damage = Number(player.lastDamage || 0);
+    const shield = Number(player.lastShield || 0);
+    const hp = Number(player.lastHealthChange || 0);
+    const power = Number(player.lastPower || 0);
+    if (damage > 0) return { value: damage, suffix: ' dmg', label: `+${LQ.formatScore(damage)} dmg` };
+    if (shield > 0) return { value: shield, suffix: ' shield', label: `+${LQ.formatScore(shield)} shield` };
+    if (power > 0) return { value: power, suffix: ' power', label: `+${LQ.formatScore(power)} power` };
+    if (hp < 0) return { value: hp, suffix: ' HP', label: `${formatSigned(hp)} HP` };
+    return { value: Number(player.lastGain || 0), suffix: ' battle', label: `${formatSigned(player.lastGain || 0)} battle` };
+  }
+  const pts = Number(player.lastGain || 0);
+  return { value: pts, suffix: ' pts', label: `${formatSigned(pts)} pts` };
+}
+
 function formatRevealModeEvent(player, modeId) {
-  if (!player.lastCorrect) return 'No mode reward this round. Get the next one.';
-  if (modeId === 'coin-rush') return player.lastModeLabel || `Coin Rush reward: +${LQ.formatScore(player.lastCoins || 0)} coins`;
-  if (modeId === 'cadet-race') return player.lastModeLabel || `Race move: +${LQ.formatScore(player.lastDistance || 0)} ft`;
-  if (modeId === 'power-battle') return player.lastModeLabel || `Battle charge: +${LQ.formatScore(player.lastPower || 0)} power`;
-  return player.lastModeLabel || 'Speed and streak points added.';
+  if (modeId === 'classic') {
+    return player.lastModeLabel || (player.lastCorrect ? 'Speed and streak points added.' : 'No points this round.');
+  }
+  if (player.lastModeLabel) return player.lastModeLabel;
+  if (modeId === 'coin-rush') return player.lastCorrect ? `Chest result: ${formatSigned(player.lastCoins || 0)} gold` : 'No chest — answer correctly to open one.';
+  if (modeId === 'cadet-race') return player.lastCorrect ? `Track move: ${formatSigned(player.lastDistance || 0)} ft` : 'No move this round.';
+  if (modeId === 'power-battle') return player.lastCorrect ? 'Battle action triggered.' : 'No battle reward this round.';
+  return 'Round complete.';
+}
+
+function resultIconForMode(correct, modeId, player) {
+  if (modeId === 'coin-rush') return correct ? '🧰' : '×';
+  if (modeId === 'cadet-race') return correct ? '🏁' : '↺';
+  if (modeId === 'power-battle') {
+    if (Number(player.lastHealthChange || 0) < 0) return '💥';
+    return correct ? '🛡️' : '×';
+  }
+  return correct ? '✓' : '×';
+}
+
+function resultLabelForMode(correct, modeId, player) {
+  if (modeId === 'coin-rush') return correct ? 'Chest opened!' : 'No chest this round';
+  if (modeId === 'cadet-race') return correct ? 'Patrol moved!' : 'Wrong turn';
+  if (modeId === 'power-battle') {
+    if (Number(player.lastHealthChange || 0) < 0) return 'You took damage';
+    return correct ? 'Battle action!' : 'No battle action';
+  }
+  return correct ? 'Correct!' : 'Not this time';
+}
+
+function rankPlayersForMode(playersObj, modeId) {
+  const players = Object.entries(playersObj || {}).map(([playerUid, player]) => ({ uid: playerUid, ...player }));
+  const nameSort = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
+  if (modeId === 'coin-rush') {
+    return players.sort((a, b) => (Number(b.coins || 0) - Number(a.coins || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+  }
+  if (modeId === 'cadet-race') {
+    return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+  }
+  if (modeId === 'power-battle') {
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.power || 0) - Number(a.power || 0)) || nameSort(a, b));
+  }
+  return LQ.rankPlayers(playersObj);
+}
+
+function formatSigned(value) {
+  const number = Math.round(Number(value || 0));
+  return `${number >= 0 ? '+' : '-'}${LQ.formatScore(Math.abs(number))}`;
 }
 
 window.addEventListener('beforeunload', () => {

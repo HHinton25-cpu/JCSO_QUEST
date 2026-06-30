@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-avatarfix';
+  const APP_VERSION = '20260630-clean-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',
@@ -124,36 +124,36 @@
       icon: '🎯',
       name: 'Classic Quiz',
       shortName: 'Classic',
-      description: 'Fast live trivia with speed points, streak bonuses, answer reveal, and leaderboard.',
+      description: 'Straight quiz mode with speed points, streak bonuses, answer reveal, and leaderboard.',
       scoring: 'Correct answers earn speed points plus streak bonuses.',
-      objective: 'Answer fast. Build a streak. Climb the leaderboard.'
+      objective: 'Answer fast. Build a streak. Climb the points leaderboard.'
     },
     {
       id: 'coin-rush',
-      icon: '💰',
+      icon: '🧰',
       name: 'Coin Rush',
       shortName: 'Coin Rush',
-      description: 'Correct answers open loot chests. Streaks and speed earn extra coins that boost the leaderboard.',
-      scoring: 'Correct answers earn points and coins. Lucky chests can double coin rewards.',
-      objective: 'Collect the most coins while keeping your accuracy high.'
+      description: 'Correct answers open chests. Chests can award gold, triple gold, steal gold, or spring a trap.',
+      scoring: 'The leaderboard is based on gold, not trivia points. Chest events can help or hurt your vault.',
+      objective: 'Build the biggest gold stash before the final question.'
     },
     {
       id: 'cadet-race',
       icon: '🏁',
       name: 'Cadet Race',
       shortName: 'Race',
-      description: 'Every correct answer moves your avatar down the track. Faster answers and streaks move farther.',
-      scoring: 'Correct answers earn points and track distance.',
-      objective: 'Race your avatar to the front before the final question.'
+      description: 'Correct answers roll your patrol forward on a track with shortcuts, roadblocks, boosts, and penalties.',
+      scoring: 'The leaderboard is based on distance toward the finish line, not speed points.',
+      objective: 'Be the first patrol to reach the finish line or end with the most distance.'
     },
     {
       id: 'power-battle',
-      icon: '⚔️',
+      icon: '🛡️',
       name: 'Power Battle',
       shortName: 'Battle',
-      description: 'Correct answers build power. Streaks charge stronger rounds and make the leaderboard swing harder.',
-      scoring: 'Correct answers earn points and battle power.',
-      objective: 'Charge the most power by answering correctly under pressure.'
+      description: 'Correct answers trigger attacks, shields, double strikes, and power surges. Wrong answers can cost health.',
+      scoring: 'The leaderboard is based on battle standing: health, damage, shields, and power.',
+      objective: 'Outlast the room by protecting your health and knocking down opponents.'
     }
   ];
 

@@ -4,56 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Host JCSO Quest</title>
-  <meta name="description" content="Host screen for JCSO Quest, a Blooket-inspired live quiz experience using DOCJT question banks." />
-  <link rel="icon" href="favicon.ico?v=20260630-avatarfix" sizes="any" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-avatarfix" />
+  <meta name="description" content="Host a live JCSO Quest training game." />
+  <link rel="icon" href="favicon.ico?v=20260630-clean-v1" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-clean-v1" />
   <meta name="theme-color" content="#062B72" />
-  <link rel="stylesheet" href="styles.css?v=20260630-avatarfix" />
+  <link rel="stylesheet" href="styles.css?v=20260630-clean-v1" />
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
   <main id="app" class="app-shell host-shell">
     <section class="screen active" id="loading-screen">
-      <div class="hero-card compact">
+      <div class="hero-card compact loading-card">
         <div class="brand-row">
-          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-avatarfix" alt="" /></span>
+          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-clean-v1" alt="" /></span>
           <div>
-            <p class="eyebrow">Host Screen</p>
+            <p class="eyebrow">Host</p>
             <h1>JCSO Quest</h1>
           </div>
         </div>
         <div class="loader" aria-hidden="true"></div>
-        <p id="load-status" class="status">Loading…</p>
-        <p class="small muted">Loading the DOCJT question banks and preparing live Firebase rooms.</p>
+        <p id="load-status" class="status">Preparing game…</p>
       </div>
     </section>
 
     <section class="screen" id="setup-screen">
-      <header class="topbar">
-        <div class="topbar-brand">
-          <img class="topbar-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-avatarfix" alt="JCSO Quest" />
+      <header class="topbar host-topbar">
+        <div class="topbar-brand clean-brand">
+          <img class="topbar-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-clean-v1" alt="JCSO Quest" />
           <div>
-            <p class="eyebrow">Host Console</p>
-            <h1>Host Quest Game</h1>
+            <p class="eyebrow">Host</p>
+            <h1>Set Up Game</h1>
           </div>
         </div>
-        <div class="pill" id="bank-pill">0 questions</div>
+        <div class="pill compact-pill" id="bank-pill">Ready</div>
       </header>
 
       <div id="firebase-warning" class="panel warning-panel hidden">
-        <h2>Firebase setup needed</h2>
-        <p>Open <code>firebase-config.js</code>, paste your Firebase web app config, enable Anonymous Auth, and add the Realtime Database rules from <code>firebase-rules.json</code>.</p>
+        <h2>Connection setup needed</h2>
+        <p>The live game connection is not ready yet. Check <code>firebase-config.js</code> and your database rules before hosting.</p>
       </div>
 
-      <div class="setup-grid two-col">
-        <section class="panel hero-panel quest-panel">
-          <div class="hero-badge">Game-mode classroom quiz</div>
-          <h2>Pick a mode, launch a PIN, and let players compete with law-enforcement character avatars.</h2>
-          <p>This keeps your live question flow, but adds polished JCSO Quest branding, a Blooket-style lobby, avatar choice, game modes, coins, race distance, battle power, and richer results.</p>
-          <div class="stats-row" id="category-summary"></div>
-        </section>
-
-        <section class="panel controls-panel">
+      <div class="setup-grid two-col clean-setup">
+        <section class="panel controls-panel primary-setup-panel">
           <h3>Game setup</h3>
           <label for="question-set-select">Question set</label>
           <select id="question-set-select"></select>
@@ -92,6 +84,18 @@
           <button class="primary-btn jumbo" id="create-game" type="button" disabled>Create Game PIN</button>
           <p id="setup-status" class="status small"></p>
         </section>
+
+        <section class="panel hero-panel quest-panel overview-panel">
+          <div class="hero-badge">Quick start</div>
+          <h2>Choose a mode, share the PIN, and start when players are ready.</h2>
+          <p>Players join from their own device, choose a character, and compete in the selected game mode.</p>
+          <div class="step-list" aria-label="Host steps">
+            <div><strong>1</strong><span>Pick setup options</span></div>
+            <div><strong>2</strong><span>Share the join PIN</span></div>
+            <div><strong>3</strong><span>Start the round</span></div>
+          </div>
+          <div id="category-summary" class="hidden"></div>
+        </section>
       </div>
     </section>
 
@@ -113,7 +117,7 @@
           <p class="eyebrow">Players go to</p>
           <h2 id="join-url" class="join-url">play.html</h2>
           <img id="join-qr" class="qr" alt="QR code for player join link" />
-          <p class="small muted">Players open the link, enter the PIN, choose a nickname, and pick an avatar.</p>
+          <p class="small muted">Players enter the PIN, choose a name, and pick a character.</p>
         </section>
         <section class="panel players-board">
           <div class="panel-title-row">
@@ -190,7 +194,7 @@
     </section>
   </main>
 
-  <script src="common.js?v=20260630-avatarfix"></script>
-  <script type="module" src="host.js?v=20260630-avatarfix"></script>
+  <script src="common.js?v=20260630-clean-v1"></script>
+  <script type="module" src="host.js?v=20260630-clean-v1"></script>
 </body>
 </html>

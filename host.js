@@ -27,6 +27,9 @@ let lastRevealAudioKey = '';
 let lastRevealAnimationKey = '';
 let lastEndedAudioKey = '';
 
+const RACE_FINISH_DISTANCE = 120;
+const BATTLE_START_HEALTH = 100;
+
 const els = {};
 
 document.addEventListener('DOMContentLoaded', init);
@@ -50,7 +53,7 @@ async function init() {
   } catch (err) {
     console.error(err);
     els.firebaseWarning.classList.remove('hidden');
-    LQ.setStatus(els.setupStatus, 'Firebase is not configured yet. Follow the README setup steps before hosting.', 'error');
+    LQ.setStatus(els.setupStatus, 'Connection setup needed before hosting.', 'error');
   }
 
   LQ.showScreen('setup');
@@ -113,9 +116,7 @@ function renderSetup() {
   }
   renderModePreview();
 
-  els.bankPill.textContent = selectedSet
-    ? `${selectedSet.label}: ${bank.length} questions loaded`
-    : `${bank.length} questions loaded`;
+  els.bankPill.textContent = bank.length ? `${bank.length} ready` : 'No questions';
 
   const categories = [...new Set(bank.map(q => q.category))].sort((a, b) => a.localeCompare(b));
   const counts = LQ.countBy(bank, q => q.category);
@@ -159,7 +160,7 @@ async function initFirebase() {
   uid = credential.user.uid;
   firebaseReady = true;
   els.createGame.disabled = !bank.length;
-  LQ.setStatus(els.setupStatus, 'Ready to host.', 'ok');
+  LQ.setStatus(els.setupStatus, 'Ready.', 'ok');
 }
 
 async function createGame() {
@@ -342,6 +343,7 @@ async function nextQuestion() {
     const eligiblePlayerUids = Object.keys(playersAtStart).filter(playerUid => playersAtStart[playerUid] && playersAtStart[playerUid].name);
     const eligiblePlayers = Object.fromEntries(eligiblePlayerUids.map(playerUid => [playerUid, true]));
     const eligiblePlayerNames = Object.fromEntries(eligiblePlayerUids.map(playerUid => [playerUid, String(playersAtStart[playerUid]?.name || 'Player')]));
+    const mode = LQ.getGameMode(liveGame?.settings?.gameMode || 'classic');
     activeQuestion = {
       localIndex: nextIndex,
       question: q,
@@ -351,29 +353,59 @@ async function nextQuestion() {
       endsAt: now + timerSeconds * 1000
     };
 
-    await update(ref(db, `${GAME_ROOT}/${gamePin}`), {
-    updatedAt: serverTimestamp(),
-    [`answers/${nextIndex}`]: null,
-    reveal: null,
-    question: {
-      key: `${nextIndex}_${q.id}_${now}`,
-      category: q.category,
-      type: q.type,
-      text: q.question,
-      choices: choices.map(item => item.choice),
-      eligiblePlayers,
-      eligiblePlayerNames,
-      eligibleCount: eligiblePlayerUids.length
-    },
-    state: {
-      phase: 'question',
-      pin: gamePin,
-      questionIndex: nextIndex,
-      questionCount: selectedQuestions.length,
-      startedAt: now,
-      endsAt: now + timerSeconds * 1000
+    const gameUpdate = {
+      updatedAt: serverTimestamp(),
+      [`answers/${nextIndex}`]: null,
+      reveal: null,
+      question: {
+        key: `${nextIndex}_${q.id}_${now}`,
+        category: q.category,
+        type: q.type,
+        text: q.question,
+        choices: choices.map(item => item.choice),
+        eligiblePlayers,
+        eligiblePlayerNames,
+        eligibleCount: eligiblePlayerUids.length
+      },
+      state: {
+        phase: 'question',
+        pin: gamePin,
+        questionIndex: nextIndex,
+        questionCount: selectedQuestions.length,
+        startedAt: now,
+        endsAt: now + timerSeconds * 1000
+      }
+    };
+
+    // Fresh round reset. Non-classic modes use their own score/objective values so
+    // Classic is the only mode that behaves like a pure Kahoot points game.
+    if (nextIndex === 0) {
+      eligiblePlayerUids.forEach(playerUid => {
+        gameUpdate[`players/${playerUid}/score`] = 0;
+        gameUpdate[`players/${playerUid}/coins`] = 0;
+        gameUpdate[`players/${playerUid}/distance`] = 0;
+        gameUpdate[`players/${playerUid}/power`] = 0;
+        gameUpdate[`players/${playerUid}/damage`] = 0;
+        gameUpdate[`players/${playerUid}/shield`] = 0;
+        gameUpdate[`players/${playerUid}/health`] = BATTLE_START_HEALTH;
+        gameUpdate[`players/${playerUid}/correct`] = 0;
+        gameUpdate[`players/${playerUid}/answered`] = 0;
+        gameUpdate[`players/${playerUid}/played`] = 0;
+        gameUpdate[`players/${playerUid}/streak`] = 0;
+        gameUpdate[`players/${playerUid}/lastGain`] = 0;
+        gameUpdate[`players/${playerUid}/lastCoins`] = 0;
+        gameUpdate[`players/${playerUid}/lastDistance`] = 0;
+        gameUpdate[`players/${playerUid}/lastPower`] = 0;
+        gameUpdate[`players/${playerUid}/lastDamage`] = 0;
+        gameUpdate[`players/${playerUid}/lastHealthChange`] = 0;
+        gameUpdate[`players/${playerUid}/lastShield`] = 0;
+        gameUpdate[`players/${playerUid}/lastModeLabel`] = mode.id === 'classic' ? 'Ready for Classic points.' : `Ready for ${mode.name}.`;
+        gameUpdate[`players/${playerUid}/lastCorrect`] = false;
+        gameUpdate[`players/${playerUid}/lastChoiceIndex`] = -1;
+      });
     }
-  });
+
+    await update(ref(db, `${GAME_ROOT}/${gamePin}`), gameUpdate);
 
     LQ.Sounds.playMusic('question');
     LQ.showScreen('question');
@@ -489,22 +521,9 @@ async function revealQuestion(manual) {
   const choices = game.question?.choices || local.choices.map(c => c.choice);
   const counts = choices.map((_, i) => Object.values(answers).filter(a => Number(a.choiceIndex) === i).length);
   const totalMs = Math.max(1000, Number(game.settings?.timerSeconds || 30) * 1000);
-  const updates = {
-    updatedAt: serverTimestamp(),
-    'state/phase': 'reveal',
-    reveal: {
-      correctIndex: local.correctIndex,
-      correctAnswer: choices[local.correctIndex] || '',
-      explanation: local.question.explanation,
-      counts,
-      manual: Boolean(manual),
-      revealedAt: Date.now()
-    }
-  };
-
   const eligibleMap = game.question?.eligiblePlayers || null;
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
-  const modeEvents = [];
+  const roundResults = {};
 
   Object.entries(players).forEach(([playerUid, player]) => {
     if (eligibleMap && !eligibleMap[playerUid]) return;
@@ -516,38 +535,66 @@ async function revealQuestion(manual) {
     const speedBase = correct ? Math.round(500 + 500 * speedRatio) : 0;
     const nextStreak = correct ? Number(player.streak || 0) + 1 : 0;
     const streakBonus = correct ? Math.min(nextStreak * 100, 500) : 0;
-    const reward = calculateModeReward(mode.id, { correct, speedBase, streakBonus, nextStreak, speedRatio, player, playerUid, questionIndex: index });
-    const gain = reward.points;
-
-    updates[`players/${playerUid}/score`] = Number(player.score || 0) + gain;
-    updates[`players/${playerUid}/correct`] = Number(player.correct || 0) + (correct ? 1 : 0);
-    updates[`players/${playerUid}/played`] = Number(player.played || 0) + 1;
-    updates[`players/${playerUid}/answered`] = Number(player.answered || 0) + (answered ? 1 : 0);
-    updates[`players/${playerUid}/streak`] = nextStreak;
-    updates[`players/${playerUid}/lastGain`] = gain;
-    updates[`players/${playerUid}/lastCorrect`] = correct;
-    updates[`players/${playerUid}/lastChoiceIndex`] = answered ? Number(answer.choiceIndex) : -1;
-    updates[`players/${playerUid}/coins`] = Number(player.coins || 0) + reward.coins;
-    updates[`players/${playerUid}/distance`] = Number(player.distance || 0) + reward.distance;
-    updates[`players/${playerUid}/power`] = Number(player.power || 0) + reward.power;
-    updates[`players/${playerUid}/lastCoins`] = reward.coins;
-    updates[`players/${playerUid}/lastDistance`] = reward.distance;
-    updates[`players/${playerUid}/lastPower`] = reward.power;
-    updates[`players/${playerUid}/lastModeLabel`] = reward.label;
-
-    if (reward.label) {
-      modeEvents.push({
-        uid: playerUid,
-        name: player.name || 'Player',
-        avatarId: player.avatarId || LQ.avatarOptions[0].id,
-        avatarIcon: player.avatarIcon || '',
-        label: reward.label,
-        value: reward.value
-      });
-    }
+    roundResults[playerUid] = {
+      uid: playerUid,
+      player,
+      answered,
+      correct,
+      choiceIndex: answered ? Number(answer.choiceIndex) : -1,
+      elapsed,
+      speedRatio,
+      speedBase,
+      streakBonus,
+      nextStreak,
+      questionIndex: index
+    };
   });
 
-  updates.reveal.mode = { id: mode.id, name: mode.name, icon: mode.icon, events: modeEvents.slice(0, 8) };
+  const modeOutcome = calculateModeOutcomes(mode.id, roundResults, players, index);
+  const updates = {
+    updatedAt: serverTimestamp(),
+    'state/phase': 'reveal',
+    reveal: {
+      correctIndex: local.correctIndex,
+      correctAnswer: choices[local.correctIndex] || '',
+      explanation: local.question.explanation,
+      counts,
+      manual: Boolean(manual),
+      revealedAt: Date.now(),
+      mode: {
+        id: mode.id,
+        name: mode.name,
+        icon: mode.icon,
+        events: modeOutcome.events.slice(0, 12)
+      }
+    }
+  };
+
+  Object.entries(roundResults).forEach(([playerUid, result]) => {
+    const player = result.player || {};
+    const outcome = modeOutcome.players[playerUid] || createEmptyOutcome(mode.id, player);
+    updates[`players/${playerUid}/score`] = outcome.score;
+    updates[`players/${playerUid}/correct`] = Number(player.correct || 0) + (result.correct ? 1 : 0);
+    updates[`players/${playerUid}/played`] = Number(player.played || 0) + 1;
+    updates[`players/${playerUid}/answered`] = Number(player.answered || 0) + (result.answered ? 1 : 0);
+    updates[`players/${playerUid}/streak`] = result.nextStreak;
+    updates[`players/${playerUid}/lastGain`] = outcome.lastGain;
+    updates[`players/${playerUid}/lastCorrect`] = result.correct;
+    updates[`players/${playerUid}/lastChoiceIndex`] = result.choiceIndex;
+    updates[`players/${playerUid}/coins`] = outcome.coins;
+    updates[`players/${playerUid}/distance`] = outcome.distance;
+    updates[`players/${playerUid}/power`] = outcome.power;
+    updates[`players/${playerUid}/damage`] = outcome.damage;
+    updates[`players/${playerUid}/shield`] = outcome.shield;
+    updates[`players/${playerUid}/health`] = outcome.health;
+    updates[`players/${playerUid}/lastCoins`] = outcome.lastCoins;
+    updates[`players/${playerUid}/lastDistance`] = outcome.lastDistance;
+    updates[`players/${playerUid}/lastPower`] = outcome.lastPower;
+    updates[`players/${playerUid}/lastDamage`] = outcome.lastDamage;
+    updates[`players/${playerUid}/lastHealthChange`] = outcome.lastHealthChange;
+    updates[`players/${playerUid}/lastShield`] = outcome.lastShield;
+    updates[`players/${playerUid}/lastModeLabel`] = outcome.label;
+  });
 
   await update(ref(db, `${GAME_ROOT}/${gamePin}`), updates);
   LQ.showScreen('reveal');
@@ -600,17 +647,16 @@ function renderReveal(game) {
 }
 
 function renderLeaderboard(container, playersObj, options = {}) {
-  const players = LQ.rankPlayers(playersObj);
+  const modeId = liveGame?.settings?.gameMode || 'classic';
+  const players = rankPlayersForMode(playersObj, modeId);
   if (!players.length) {
     container.innerHTML = '<p class="muted">No players joined.</p>';
     return;
   }
   const animate = Boolean(options.animate);
-  const modeId = liveGame?.settings?.gameMode || 'classic';
   container.innerHTML = players.map((p, i) => {
     const targetScore = Number(p.score || 0);
-    const startScore = animate ? Math.max(0, targetScore - Number(p.lastGain || 0)) : targetScore;
-    const avatar = LQ.getAvatar(p.avatarId);
+    const startScore = animate ? targetScore - Number(p.lastGain || 0) : targetScore;
     return `
       <div class="leader-row ${i === 0 ? 'first' : ''}">
         <div class="rank-wrap"><div class="rank">${i + 1}</div><div class="leader-avatar">${LQ.avatarMarkup(p, 'avatar-img')}</div></div>
@@ -618,7 +664,7 @@ function renderLeaderboard(container, playersObj, options = {}) {
           <strong>${LQ.escapeHtml(p.name || 'Player')}</strong>
           <span>${formatLeaderboardDetail(p, modeId)}</span>
         </div>
-        <div class="leader-score" data-from-score="${startScore}" data-to-score="${targetScore}">${LQ.formatScore(startScore)} pts</div>
+        <div class="leader-score" data-from-score="${startScore}" data-to-score="${targetScore}">${formatLeaderboardScore(p, modeId, startScore)}</div>
       </div>
     `;
   }).join('');
@@ -626,7 +672,7 @@ function renderLeaderboard(container, playersObj, options = {}) {
   if (animate) {
     container.querySelectorAll('[data-to-score]').forEach(el => {
       LQ.animateNumber(el, Number(el.dataset.fromScore || 0), Number(el.dataset.toScore || 0), {
-        suffix: ' pts',
+        suffix: scoreSuffix(modeId),
         duration: 1000,
         onTick: () => LQ.Sounds.pointsTick()
       });
@@ -634,32 +680,82 @@ function renderLeaderboard(container, playersObj, options = {}) {
   }
 }
 
+function formatLeaderboardScore(p, modeId, value = Number(p.score || 0)) {
+  if (modeId === 'coin-rush') return `${LQ.formatScore(value)} gold`;
+  if (modeId === 'cadet-race') return `${LQ.formatScore(value)} ft`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(value)} battle`;
+  return `${LQ.formatScore(value)} pts`;
+}
+
+function scoreSuffix(modeId) {
+  if (modeId === 'coin-rush') return ' gold';
+  if (modeId === 'cadet-race') return ' ft';
+  if (modeId === 'power-battle') return ' battle';
+  return ' pts';
+}
+
 function formatLeaderboardDetail(p, modeId) {
   const base = `${Number(p.correct || 0)} correct · streak ${Number(p.streak || 0)}`;
   if (modeId === 'coin-rush') {
-    return `${base} · ${LQ.formatScore(p.coins || 0)} coins${Number(p.lastCoins || 0) ? ` · +${LQ.formatScore(p.lastCoins)} coins` : ''}`;
+    return `${base} · ${LQ.formatScore(p.coins || 0)} gold${Number(p.lastCoins || 0) ? ` · ${formatSigned(p.lastCoins)} gold` : ''}`;
   }
   if (modeId === 'cadet-race') {
-    return `${base} · ${LQ.formatScore(p.distance || 0)} ft${Number(p.lastDistance || 0) ? ` · +${LQ.formatScore(p.lastDistance)} ft` : ''}`;
+    return `${base} · ${LQ.formatScore(p.distance || 0)} / ${RACE_FINISH_DISTANCE} ft${Number(p.lastDistance || 0) ? ` · ${formatSigned(p.lastDistance)} ft` : ''}`;
   }
   if (modeId === 'power-battle') {
-    return `${base} · ${LQ.formatScore(p.power || 0)} power${Number(p.lastPower || 0) ? ` · +${LQ.formatScore(p.lastPower)} power` : ''}`;
+    return `${base} · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(p.damage || 0)} dmg · ${LQ.formatScore(p.shield || 0)} shield`;
   }
-  return `${base}${Number(p.lastGain || 0) ? ` · +${LQ.formatScore(p.lastGain)} pts` : ''}`;
+  return `${base}${Number(p.lastGain || 0) ? ` · ${formatSigned(p.lastGain)} pts` : ''}`;
 }
 
 function renderModeStatus(game) {
   if (!els.modeStatusPanel) return;
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
-  const top = LQ.rankPlayers(game.players || {}).slice(0, 4);
-  const cards = top.map((p, i) => {
-    const avatar = LQ.getAvatar(p.avatarId);
-    return `<div class="mode-mini-card">
+  const players = rankPlayersForMode(game.players || {}, mode.id).slice(0, 8);
+
+  if (mode.id === 'coin-rush') {
+    els.modeStatusPanel.innerHTML = `
+      <div class="mode-objective"><strong>${mode.icon} Coin Rush</strong><span>Correct answers open chests: gold, triple gold, steal, raid, or trap.</span></div>
+      <div class="coin-board">
+        ${players.map((p, i) => `<div class="coin-card ${i === 0 ? 'first' : ''}">${LQ.avatarMarkup(p, 'avatar-img')}<strong>${LQ.escapeHtml(p.name || 'Player')}</strong><span>🪙 ${LQ.formatScore(p.coins || 0)} gold</span></div>`).join('') || '<span class="muted">No players yet.</span>'}
+      </div>
+    `;
+    return;
+  }
+
+  if (mode.id === 'cadet-race') {
+    els.modeStatusPanel.innerHTML = `
+      <div class="mode-objective"><strong>${mode.icon} Cadet Race</strong><span>Finish line: ${RACE_FINISH_DISTANCE} ft. Correct answers roll movement and track events.</span></div>
+      <div class="race-board">
+        ${players.map(p => {
+          const distance = LQ.clamp(Number(p.distance || 0), 0, RACE_FINISH_DISTANCE);
+          const percent = (distance / RACE_FINISH_DISTANCE) * 100;
+          return `<div class="race-lane"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="race-track"><span style="width:${percent}%"></span><em style="left:${percent}%">🏃</em></div><small>${LQ.formatScore(distance)} ft</small></div>`;
+        }).join('') || '<span class="muted">No racers yet.</span>'}
+      </div>
+    `;
+    return;
+  }
+
+  if (mode.id === 'power-battle') {
+    els.modeStatusPanel.innerHTML = `
+      <div class="mode-objective"><strong>${mode.icon} Power Battle</strong><span>Correct answers attack, shield, or surge. Wrong answers can cost health.</span></div>
+      <div class="battle-board">
+        ${players.map(p => {
+          const health = LQ.clamp(Number(p.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
+          const shield = LQ.clamp(Number(p.shield || 0), 0, 60);
+          return `<div class="battle-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${health}%"></i><b style="width:${shield}%"></b></div><small>${LQ.formatScore(health)} HP · ${LQ.formatScore(p.damage || 0)} dmg</small></div>`;
+        }).join('') || '<span class="muted">No battlers yet.</span>'}
+      </div>
+    `;
+    return;
+  }
+
+  const cards = players.slice(0, 4).map((p, i) => `<div class="mode-mini-card">
       <span class="mode-mini-avatar">${LQ.avatarMarkup(p, 'avatar-img')}</span>
       <strong>${LQ.escapeHtml(p.name || 'Player')}</strong>
       <small>#${i + 1} · ${formatModeStat(p, mode.id)}</small>
-    </div>`;
-  }).join('');
+    </div>`).join('');
   els.modeStatusPanel.innerHTML = `
     <div class="mode-objective"><strong>${mode.icon} ${LQ.escapeHtml(mode.shortName || mode.name)}</strong><span>${LQ.escapeHtml(mode.objective)}</span></div>
     <div class="mode-mini-grid">${cards || '<span class="muted">No players yet.</span>'}</div>
@@ -667,9 +763,9 @@ function renderModeStatus(game) {
 }
 
 function formatModeStat(player, modeId) {
-  if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} coins`;
+  if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.damage || 0)} dmg`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -682,9 +778,9 @@ function renderModeRevealBanner(game) {
     return;
   }
   els.modeRevealBanner.innerHTML = `
-    <strong>${mode.icon} ${LQ.escapeHtml(mode.name)} rewards</strong>
+    <strong>${mode.icon} ${LQ.escapeHtml(mode.name)} round events</strong>
     <div class="mode-event-list">
-      ${events.map(event => `<span class="mode-event-chip">${LQ.avatarMarkup(event, 'avatar-img tiny-avatar-img')} <b>${LQ.escapeHtml(event.name)}</b>: ${LQ.escapeHtml(event.label)}</span>`).join('')}
+      ${events.map(event => `<span class="mode-event-chip ${LQ.escapeAttr(event.type || '')}">${LQ.avatarMarkup(event, 'avatar-img tiny-avatar-img')} <b>${LQ.escapeHtml(event.name)}</b>: ${LQ.escapeHtml(event.label)}</span>`).join('')}
     </div>
   `;
 }
@@ -692,75 +788,397 @@ function renderModeRevealBanner(game) {
 function renderFinalModeSummary(game) {
   if (!els.finalModeSummary) return;
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
-  const ranked = LQ.rankPlayers(game.players || {});
+  const ranked = rankPlayersForMode(game.players || {}, mode.id);
   const top = ranked[0];
   if (!top) {
     els.finalModeSummary.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>No player results.</span>`;
     return;
   }
-  els.finalModeSummary.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>Top result: ${LQ.escapeHtml(top.name || 'Player')} with ${formatModeStat(top, mode.id)} and ${LQ.formatScore(top.score || 0)} points.</span>`;
+  const winLine = mode.id === 'classic'
+    ? `${LQ.formatScore(top.score || 0)} points`
+    : formatModeStat(top, mode.id);
+  els.finalModeSummary.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>Winner: ${LQ.escapeHtml(top.name || 'Player')} with ${winLine}.</span>`;
 }
 
-function calculateModeReward(modeId, ctx) {
-  const basePoints = ctx.correct ? ctx.speedBase + ctx.streakBonus : 0;
-  if (!ctx.correct) {
-    return { points: 0, coins: 0, distance: 0, power: 0, value: 0, label: '' };
-  }
+function calculateModeOutcomes(modeId, roundResults, players, questionIndex) {
+  if (modeId === 'coin-rush') return calculateCoinRushOutcomes(roundResults, players, questionIndex);
+  if (modeId === 'cadet-race') return calculateRaceOutcomes(roundResults, players, questionIndex);
+  if (modeId === 'power-battle') return calculateBattleOutcomes(roundResults, players, questionIndex);
+  return calculateClassicOutcomes(roundResults, players);
+}
 
-  if (modeId === 'coin-rush') {
-    const lucky = seededChance(`${ctx.playerUid}-${ctx.questionIndex}-${ctx.nextStreak}`, 0.18);
-    const rawCoins = Math.round(25 + ctx.speedRatio * 35 + Math.min(ctx.nextStreak * 6, 36));
-    const coins = lucky ? rawCoins * 2 : rawCoins;
-    return {
-      points: basePoints + coins * 12,
-      coins,
-      distance: 0,
-      power: 0,
-      value: coins,
-      label: lucky ? `Lucky chest doubled to +${coins} coins` : `+${coins} coins`
-    };
-  }
-
-  if (modeId === 'cadet-race') {
-    const distance = Math.round(10 + ctx.speedRatio * 18 + Math.min(ctx.nextStreak * 2, 12));
-    return {
-      points: basePoints + distance * 30,
-      coins: 0,
-      distance,
-      power: 0,
-      value: distance,
-      label: `Moved +${distance} ft`
-    };
-  }
-
-  if (modeId === 'power-battle') {
-    const power = Math.round(12 + ctx.speedRatio * 18 + Math.min(ctx.nextStreak * 3, 18));
-    return {
-      points: basePoints + power * 25,
-      coins: 0,
-      distance: 0,
-      power,
-      value: power,
-      label: `Charged +${power} power`
-    };
-  }
-
+function createEmptyOutcome(modeId, player) {
+  const health = Number(player.health ?? BATTLE_START_HEALTH);
   return {
-    points: basePoints,
-    coins: 0,
-    distance: 0,
-    power: 0,
-    value: basePoints,
-    label: `+${LQ.formatScore(basePoints)} points`
+    score: Number(player.score || 0),
+    coins: Number(player.coins || 0),
+    distance: Number(player.distance || 0),
+    power: Number(player.power || 0),
+    damage: Number(player.damage || 0),
+    shield: Number(player.shield || 0),
+    health,
+    lastGain: 0,
+    lastCoins: 0,
+    lastDistance: 0,
+    lastPower: 0,
+    lastDamage: 0,
+    lastHealthChange: 0,
+    lastShield: 0,
+    label: modeId === 'classic' ? 'No points this round.' : 'No mode reward this round.',
+    value: 0
   };
 }
 
-function seededChance(seed, probability) {
-  let hash = 0;
-  for (let i = 0; i < String(seed).length; i += 1) {
-    hash = ((hash << 5) - hash + String(seed).charCodeAt(i)) | 0;
+function baseOutcomes(roundResults, players, modeId) {
+  const outcomes = {};
+  Object.keys(roundResults).forEach(uid => {
+    outcomes[uid] = createEmptyOutcome(modeId, players[uid] || {});
+  });
+  return outcomes;
+}
+
+function calculateClassicOutcomes(roundResults, players) {
+  const outcomes = baseOutcomes(roundResults, players, 'classic');
+  const events = [];
+  Object.entries(roundResults).forEach(([uid, result]) => {
+    const points = result.correct ? result.speedBase + result.streakBonus : 0;
+    outcomes[uid].score = Number(result.player.score || 0) + points;
+    outcomes[uid].lastGain = points;
+    outcomes[uid].value = points;
+    outcomes[uid].label = result.correct ? `+${LQ.formatScore(points)} speed/streak points` : 'No points this round.';
+  });
+  return { players: outcomes, events };
+}
+
+function calculateCoinRushOutcomes(roundResults, players, questionIndex) {
+  const outcomes = baseOutcomes(roundResults, players, 'coin-rush');
+  const events = [];
+  const liveCoins = {};
+  Object.keys(outcomes).forEach(uid => { liveCoins[uid] = Number(players[uid]?.coins || 0); });
+  const correctUids = Object.keys(roundResults).filter(uid => roundResults[uid].correct);
+
+  correctUids.forEach(uid => {
+    const result = roundResults[uid];
+    const player = result.player || {};
+    const roll = seededNumber(`${uid}-${questionIndex}-coin-event`);
+    const baseGold = Math.round(45 + result.speedRatio * 35 + Math.min(result.nextStreak * 8, 56));
+    let delta = 0;
+    let label = '';
+    let type = 'coin';
+    let coinAlreadyApplied = false;
+
+    if (roll < 0.38) {
+      delta = baseGold;
+      label = `Opened a chest: +${delta} gold`;
+      type = 'chest';
+    } else if (roll < 0.58) {
+      delta = baseGold * 3;
+      label = `TRIPLE GOLD chest: +${delta} gold`;
+      type = 'triple';
+    } else if (roll < 0.73) {
+      delta = -Math.min(liveCoins[uid], Math.max(25, Math.round(liveCoins[uid] * 0.25)));
+      label = delta < 0 ? `Trap chest took ${Math.abs(delta)} gold` : 'Trap chest was empty — no gold lost';
+      type = 'trap';
+    } else if (roll < 0.90) {
+      const targetUid = pickTarget(uid, Object.keys(roundResults), players, `${uid}-${questionIndex}-steal`);
+      if (targetUid && liveCoins[targetUid] > 0) {
+        const stolen = Math.min(liveCoins[targetUid], Math.max(20, Math.round(liveCoins[targetUid] * 0.30)));
+        liveCoins[targetUid] -= stolen;
+        liveCoins[uid] += stolen;
+        coinAlreadyApplied = true;
+        outcomes[targetUid].lastCoins -= stolen;
+        outcomes[targetUid].lastGain -= stolen;
+        outcomes[targetUid].label = `${player.name || 'A player'} stole ${stolen} gold from you`;
+        delta = stolen;
+        label = `Steal chest: took ${stolen} gold from ${players[targetUid]?.name || 'another player'}`;
+        type = 'steal';
+        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -stolen, 'stolen'));
+      } else {
+        delta = baseGold;
+        label = `Steal chest found no target, banked +${delta} gold`;
+        type = 'chest';
+      }
+    } else {
+      const victims = Object.keys(roundResults).filter(otherUid => otherUid !== uid && liveCoins[otherUid] > 0);
+      let totalRaid = 0;
+      victims.forEach(victimUid => {
+        const taken = Math.min(liveCoins[victimUid], Math.max(8, Math.round(liveCoins[victimUid] * 0.12)));
+        liveCoins[victimUid] -= taken;
+        totalRaid += taken;
+        outcomes[victimUid].lastCoins -= taken;
+        outcomes[victimUid].lastGain -= taken;
+        outcomes[victimUid].label = `${player.name || 'A player'} raided ${taken} gold from your vault`;
+        events.push(eventFor(victimUid, players[victimUid] || {}, outcomes[victimUid].label, -taken, 'raid-loss'));
+      });
+      delta = totalRaid || baseGold;
+      label = totalRaid ? `Vault raid: collected ${totalRaid} gold from the room` : `Vault raid bonus: +${delta} gold`;
+      type = 'raid';
+    }
+
+    if (!coinAlreadyApplied) {
+      liveCoins[uid] += delta;
+    }
+    outcomes[uid].lastCoins += delta;
+    outcomes[uid].lastGain += delta;
+    outcomes[uid].label = label;
+    outcomes[uid].value = delta;
+    events.push(eventFor(uid, player, label, delta, type));
+  });
+
+  Object.keys(outcomes).forEach(uid => {
+    const coins = Math.max(0, Math.round(liveCoins[uid]));
+    outcomes[uid].coins = coins;
+    outcomes[uid].score = coins;
+    outcomes[uid].lastCoins = Math.round(outcomes[uid].lastCoins || 0);
+    outcomes[uid].lastGain = Math.round(outcomes[uid].lastGain || 0);
+    if (!roundResults[uid].correct && !outcomes[uid].label.includes('stole') && !outcomes[uid].label.includes('raided')) {
+      outcomes[uid].label = 'No chest — answer correctly to open one.';
+    }
+  });
+  return { players: outcomes, events };
+}
+
+function calculateRaceOutcomes(roundResults, players, questionIndex) {
+  const outcomes = baseOutcomes(roundResults, players, 'cadet-race');
+  const events = [];
+  Object.entries(roundResults).forEach(([uid, result]) => {
+    const player = result.player || {};
+    const current = Number(player.distance || 0);
+    let move = 0;
+    let label = '';
+    let type = 'race';
+    if (result.correct) {
+      const roll = seededNumber(`${uid}-${questionIndex}-race-event`);
+      const baseMove = Math.round(14 + result.speedRatio * 14 + Math.min(result.nextStreak * 3, 18));
+      if (roll < 0.42) {
+        move = baseMove;
+        label = `Patrol roll: +${move} ft`;
+        type = 'roll';
+      } else if (roll < 0.62) {
+        move = baseMove + 18;
+        label = `Shortcut found: +${move} ft`;
+        type = 'shortcut';
+      } else if (roll < 0.78) {
+        move = Math.max(7, Math.round(baseMove * 0.55));
+        label = `Roadblock slowed the patrol: +${move} ft`;
+        type = 'roadblock';
+      } else if (roll < 0.92) {
+        move = baseMove + 10 + (result.nextStreak >= 3 ? 10 : 0);
+        label = `Siren boost: +${move} ft`;
+        type = 'boost';
+      } else {
+        const leadBonus = current < raceLeaderDistance(players, outcomes) ? 16 : 8;
+        move = baseMove + leadBonus;
+        label = `Drafted off the lead car: +${move} ft`;
+        type = 'draft';
+      }
+    } else if (result.answered) {
+      move = -Math.min(8, current);
+      label = move < 0 ? `Wrong turn: ${move} ft` : 'Wrong turn at the start line.';
+      type = 'wrong-turn';
+    } else {
+      label = 'No move this round.';
+      type = 'no-move';
+    }
+    const distance = LQ.clamp(current + move, 0, RACE_FINISH_DISTANCE);
+    outcomes[uid].distance = distance;
+    outcomes[uid].score = distance;
+    outcomes[uid].lastDistance = distance - current;
+    outcomes[uid].lastGain = distance - current;
+    outcomes[uid].value = distance - current;
+    outcomes[uid].label = distance >= RACE_FINISH_DISTANCE && current < RACE_FINISH_DISTANCE ? `${label} FINISH LINE!` : label;
+    if (label) events.push(eventFor(uid, player, outcomes[uid].label, outcomes[uid].lastDistance, type));
+  });
+  return { players: outcomes, events };
+}
+
+function calculateBattleOutcomes(roundResults, players, questionIndex) {
+  const outcomes = baseOutcomes(roundResults, players, 'power-battle');
+  const events = [];
+  Object.keys(outcomes).forEach(uid => {
+    outcomes[uid].health = LQ.clamp(Number(players[uid]?.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
+    outcomes[uid].shield = LQ.clamp(Number(players[uid]?.shield || 0), 0, 60);
+    outcomes[uid].damage = Number(players[uid]?.damage || 0);
+    outcomes[uid].power = Number(players[uid]?.power || 0);
+  });
+
+  Object.entries(roundResults).forEach(([uid, result]) => {
+    const player = result.player || {};
+    if (!result.correct) {
+      if (result.answered) {
+        const penalty = Math.min(8, outcomes[uid].health);
+        outcomes[uid].health -= penalty;
+        outcomes[uid].lastHealthChange -= penalty;
+        outcomes[uid].label = penalty ? `Missed shot: -${penalty} HP` : 'Already knocked down — no HP lost.';
+        events.push(eventFor(uid, player, outcomes[uid].label, -penalty, 'battle-miss'));
+      } else {
+        outcomes[uid].label = 'No battle action this round.';
+      }
+      return;
+    }
+
+    const roll = seededNumber(`${uid}-${questionIndex}-battle-event`);
+    const attack = Math.round(16 + result.speedRatio * 18 + Math.min(result.nextStreak * 4, 24));
+    let label = '';
+    let type = 'attack';
+
+    if (roll < 0.52) {
+      const targetUid = pickBattleTarget(uid, outcomes, players, `${uid}-${questionIndex}-attack`);
+      const dealt = applyDamage(outcomes, targetUid, attack);
+      outcomes[uid].damage += dealt;
+      outcomes[uid].power += Math.round(attack * 0.25);
+      outcomes[uid].lastDamage += dealt;
+      outcomes[uid].lastPower += Math.round(attack * 0.25);
+      label = targetUid ? `Attack hit ${players[targetUid]?.name || 'opponent'} for ${dealt} damage` : `Training strike scored ${attack} power`;
+      type = 'attack';
+      if (targetUid) {
+        outcomes[targetUid].label = `${player.name || 'Opponent'} hit you for ${dealt} damage`;
+        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
+      }
+    } else if (roll < 0.70) {
+      const shieldGain = Math.round(attack * 0.75);
+      const before = outcomes[uid].shield;
+      outcomes[uid].shield = LQ.clamp(outcomes[uid].shield + shieldGain, 0, 60);
+      outcomes[uid].lastShield += outcomes[uid].shield - before;
+      outcomes[uid].power += Math.round(attack * 0.3);
+      outcomes[uid].lastPower += Math.round(attack * 0.3);
+      label = `Raised a shield: +${outcomes[uid].lastShield} shield`;
+      type = 'shield';
+    } else if (roll < 0.86) {
+      const targets = pickMultipleTargets(uid, outcomes, players, `${uid}-${questionIndex}-double`, 2);
+      let totalDealt = 0;
+      targets.forEach(targetUid => {
+        const dealt = applyDamage(outcomes, targetUid, Math.round(attack * 0.70));
+        totalDealt += dealt;
+        outcomes[targetUid].label = `${player.name || 'Opponent'} double-struck you for ${dealt} damage`;
+        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
+      });
+      outcomes[uid].damage += totalDealt;
+      outcomes[uid].lastDamage += totalDealt;
+      outcomes[uid].power += Math.round(attack * 0.25);
+      outcomes[uid].lastPower += Math.round(attack * 0.25);
+      label = targets.length ? `Double strike dealt ${totalDealt} total damage` : `Double strike charged ${attack} power`;
+      type = 'double';
+    } else if (roll < 0.96) {
+      const surge = attack + 12;
+      outcomes[uid].power += surge;
+      outcomes[uid].lastPower += surge;
+      label = `Power surge: +${surge} power`;
+      type = 'surge';
+    } else {
+      const targetUid = pickBattleTarget(uid, outcomes, players, `${uid}-${questionIndex}-critical`);
+      const dealt = applyDamage(outcomes, targetUid, attack + 18);
+      outcomes[uid].damage += dealt;
+      outcomes[uid].lastDamage += dealt;
+      outcomes[uid].power += 10;
+      outcomes[uid].lastPower += 10;
+      label = targetUid ? `Critical raid hit ${players[targetUid]?.name || 'opponent'} for ${dealt} damage` : `Critical raid charged ${attack + 18} power`;
+      type = 'critical';
+      if (targetUid) {
+        outcomes[targetUid].label = `${player.name || 'Opponent'} landed a critical raid for ${dealt} damage`;
+        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
+      }
+    }
+
+    outcomes[uid].label = label;
+    events.push(eventFor(uid, player, label, outcomes[uid].lastDamage || outcomes[uid].lastPower || outcomes[uid].lastShield, type));
+  });
+
+  Object.entries(outcomes).forEach(([uid, outcome]) => {
+    const oldScore = Number(players[uid]?.score || 0);
+    outcome.health = LQ.clamp(Math.round(outcome.health), 0, BATTLE_START_HEALTH);
+    outcome.shield = LQ.clamp(Math.round(outcome.shield), 0, 60);
+    outcome.damage = Math.round(outcome.damage);
+    outcome.power = Math.round(outcome.power);
+    outcome.score = Math.round(outcome.health + outcome.damage + outcome.power + outcome.shield * 0.5);
+    outcome.lastGain = outcome.score - oldScore;
+  });
+  return { players: outcomes, events };
+}
+
+function eventFor(uid, player, label, value, type = '') {
+  return {
+    uid,
+    name: player.name || 'Player',
+    avatarId: player.avatarId || LQ.avatarOptions[0].id,
+    avatarIcon: player.avatarIcon || '',
+    label,
+    value: Number(value || 0),
+    type
+  };
+}
+
+function pickTarget(uid, candidateUids, players, seed) {
+  const options = candidateUids.filter(otherUid => otherUid !== uid && players[otherUid]);
+  if (!options.length) return '';
+  const index = Math.floor(seededNumber(seed) * options.length) % options.length;
+  return options[index];
+}
+
+function raceLeaderDistance(players, outcomes) {
+  return Math.max(0, ...Object.keys(outcomes).map(uid => Number(outcomes[uid]?.distance ?? players[uid]?.distance ?? 0)));
+}
+
+function pickBattleTarget(uid, outcomes, players, seed) {
+  const options = Object.keys(outcomes).filter(otherUid => otherUid !== uid && Number(outcomes[otherUid].health || 0) > 0);
+  if (!options.length) return '';
+  const sorted = options.sort((a, b) => (Number(outcomes[b].health || 0) - Number(outcomes[a].health || 0)) || String(players[a]?.name || '').localeCompare(String(players[b]?.name || '')));
+  const index = Math.floor(seededNumber(seed) * sorted.length) % sorted.length;
+  return sorted[index];
+}
+
+function pickMultipleTargets(uid, outcomes, players, seed, count) {
+  const selected = [];
+  let options = Object.keys(outcomes).filter(otherUid => otherUid !== uid && Number(outcomes[otherUid].health || 0) > 0);
+  while (options.length && selected.length < count) {
+    const index = Math.floor(seededNumber(`${seed}-${selected.length}`) * options.length) % options.length;
+    selected.push(options[index]);
+    options = options.filter(targetUid => targetUid !== selected[selected.length - 1]);
   }
-  return Math.abs(hash % 1000) / 1000 < probability;
+  return selected;
+}
+
+function applyDamage(outcomes, targetUid, amount) {
+  if (!targetUid || !outcomes[targetUid]) return 0;
+  let remaining = Math.max(0, Math.round(amount));
+  const shieldBlock = Math.min(Number(outcomes[targetUid].shield || 0), remaining);
+  outcomes[targetUid].shield -= shieldBlock;
+  outcomes[targetUid].lastShield -= shieldBlock;
+  remaining -= shieldBlock;
+  const healthDamage = Math.min(Number(outcomes[targetUid].health || 0), remaining);
+  outcomes[targetUid].health -= healthDamage;
+  outcomes[targetUid].lastHealthChange -= healthDamage;
+  return shieldBlock + healthDamage;
+}
+
+function rankPlayersForMode(playersObj, modeId) {
+  const players = Object.entries(playersObj || {}).map(([uid, player]) => ({ uid, ...player }));
+  const nameSort = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
+  if (modeId === 'coin-rush') {
+    return players.sort((a, b) => (Number(b.coins || 0) - Number(a.coins || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+  }
+  if (modeId === 'cadet-race') {
+    return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+  }
+  if (modeId === 'power-battle') {
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.power || 0) - Number(a.power || 0)) || nameSort(a, b));
+  }
+  return LQ.rankPlayers(playersObj);
+}
+
+function seededNumber(seed) {
+  let hash = 2166136261;
+  const str = String(seed);
+  for (let i = 0; i < str.length; i += 1) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
+function formatSigned(value) {
+  const number = Math.round(Number(value || 0));
+  return `${number >= 0 ? '+' : '-'}${LQ.formatScore(Math.abs(number))}`;
 }
 
 async function endGame() {
@@ -782,7 +1200,8 @@ function renderEnded(game) {
     lastEndedAudioKey = endedKey;
     LQ.Sounds.victory();
   }
-  const ranked = LQ.rankPlayers(game.players || {});
+  const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
+  const ranked = rankPlayersForMode(game.players || {}, mode.id);
   els.winnerTitle.textContent = ranked[0] ? `${ranked[0].name || 'Winner'} wins!` : 'Game ended';
   renderFinalModeSummary(game);
   renderLeaderboard(els.finalLeaderboard, game.players || {});

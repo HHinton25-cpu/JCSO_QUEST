@@ -432,7 +432,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   line-height: 1.45;
 }
 
-/* JCSO Quest / Blooket-inspired original additions */
+/* JCSO Quest original game styling */
 :root {
   --quest-cyan: #32d7ff;
   --quest-gold: #ffd84d;
@@ -702,4 +702,263 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   .mode-mini-grid { grid-template-columns: 1fr; }
   .leader-row { grid-template-columns: 1fr; text-align: left; }
   .leader-score { justify-self: start; }
+}
+
+/* Actual mode game boards */
+.coin-board, .race-board, .battle-board {
+  display: grid;
+  gap: .65rem;
+}
+.coin-board {
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+}
+.coin-card {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: .15rem .55rem;
+  align-items: center;
+  padding: .7rem;
+  border-radius: 1rem;
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.22);
+}
+.coin-card.first { background: linear-gradient(135deg, rgba(255,216,77,.36), rgba(255,255,255,.12)); }
+.coin-card .avatar-img { grid-row: span 2; width: 2.45rem; height: 2.45rem; }
+.coin-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coin-card span { font-weight: 1000; color: rgba(255,255,255,.84); }
+.race-lane, .battle-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(80px, .8fr) 1.4fr auto;
+  gap: .55rem;
+  align-items: center;
+  padding: .55rem .65rem;
+  border-radius: 1rem;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.22);
+  color: #fff;
+}
+.race-lane strong, .battle-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race-lane small, .battle-row small { font-weight: 950; color: rgba(255,255,255,.84); white-space: nowrap; }
+.race-track, .battle-bars {
+  position: relative;
+  min-height: 1.15rem;
+  border-radius: 999px;
+  background: rgba(9,17,42,.35);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+}
+.race-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--quest-cyan), var(--quest-gold));
+}
+.race-track em {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-style: normal;
+  font-size: .95rem;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+}
+.battle-bars i, .battle-bars b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+}
+.battle-bars i { background: linear-gradient(90deg, #17c964, #f5d547); }
+.battle-bars b { background: linear-gradient(90deg, rgba(50,215,255,.78), rgba(109,61,246,.6)); mix-blend-mode: screen; }
+.mode-event-chip.trap, .mode-event-chip.stolen, .mode-event-chip.raid-loss, .mode-event-chip.hit, .mode-event-chip.battle-miss, .mode-event-chip.wrong-turn {
+  background: rgba(220,38,38,.12);
+  color: #8a1111;
+}
+.mode-event-chip.triple, .mode-event-chip.shortcut, .mode-event-chip.boost, .mode-event-chip.critical, .mode-event-chip.surge {
+  background: rgba(255,216,77,.26);
+  color: #5c3a00;
+}
+.mode-event-chip.shield, .mode-event-chip.chest, .mode-event-chip.roll, .mode-event-chip.attack {
+  background: rgba(6,43,114,.10);
+  color: var(--primary-dark);
+}
+
+@media (max-width: 720px) {
+  .race-lane, .battle-row {
+    grid-template-columns: 2rem 1fr;
+  }
+  .race-track, .battle-bars, .race-lane small, .battle-row small {
+    grid-column: 2 / -1;
+  }
+}
+
+
+/* Professional cleanup pass: 20260630-clean-v1 */
+.app-shell, .center-shell, .player-shell {
+  padding-top: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-top));
+  padding-bottom: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-bottom));
+}
+.landing-shell {
+  align-items: center;
+}
+.polished-landing {
+  width: min(100%, 720px);
+}
+.polished-landing .hero-logo-img {
+  width: min(100%, 600px);
+  margin-inline: auto;
+}
+.polished-landing .lead {
+  max-width: 44rem;
+  margin: 1rem auto 0;
+  text-align: center;
+  font-size: clamp(1.05rem, 2.4vw, 1.32rem);
+  line-height: 1.45;
+}
+.polished-landing .eyebrow {
+  text-align: center;
+}
+.polished-landing .landing-actions {
+  justify-content: center;
+  margin-top: 1.35rem;
+}
+.professional-strip {
+  justify-content: center;
+  margin-top: 1.15rem;
+}
+.professional-strip span {
+  background: rgba(6,43,114,.08);
+  border: 1px solid rgba(6,43,114,.10);
+}
+.host-topbar {
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.clean-brand {
+  align-items: center;
+}
+.clean-brand .eyebrow {
+  margin-bottom: .15rem;
+}
+.topbar-brand h1 {
+  font-size: clamp(1.65rem, 3.4vw, 3rem);
+  line-height: 1;
+}
+.compact-pill {
+  white-space: nowrap;
+  min-width: fit-content;
+}
+.clean-setup {
+  grid-template-columns: minmax(320px, .95fr) minmax(320px, 1.05fr);
+  align-items: start;
+}
+.primary-setup-panel {
+  order: 1;
+}
+.overview-panel {
+  order: 2;
+  min-height: auto;
+  justify-content: flex-start;
+  gap: 1rem;
+}
+.overview-panel h2 {
+  font-size: clamp(1.55rem, 3vw, 2.55rem);
+  margin-bottom: .2rem;
+}
+.overview-panel p {
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+.step-list {
+  display: grid;
+  gap: .7rem;
+  margin-top: .5rem;
+}
+.step-list div {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem;
+  border-radius: 1rem;
+  background: rgba(6,43,114,.07);
+}
+.step-list strong {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--primary-dark);
+  color: #fff;
+}
+.step-list span {
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+.loading-card .small {
+  display: none;
+}
+.polished-join-card .brand-row h1 {
+  font-size: clamp(2rem, 7vw, 3.25rem);
+}
+
+@media (max-width: 900px) {
+  .clean-setup {
+    grid-template-columns: 1fr;
+  }
+  .host-topbar {
+    align-items: flex-start;
+  }
+  .clean-brand {
+    flex-direction: row;
+    align-items: center;
+  }
+  .topbar-logo {
+    width: min(56vw, 230px);
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-card {
+    padding: 1.3rem;
+  }
+  .landing-card {
+    border-radius: 1.55rem;
+  }
+  .polished-landing .lead {
+    text-align: left;
+  }
+  .polished-landing .eyebrow {
+    text-align: center;
+    font-size: .68rem;
+    letter-spacing: .12em;
+  }
+  .landing-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .professional-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .professional-strip span {
+    text-align: center;
+  }
+  .clean-brand {
+    gap: .75rem;
+  }
+  .topbar-logo {
+    width: min(48vw, 190px);
+  }
+  .topbar-brand h1 {
+    font-size: clamp(1.5rem, 8vw, 2.15rem);
+  }
+  .compact-pill {
+    padding: .45rem .75rem;
+    font-size: .85rem;
+  }
+  .overview-panel {
+    display: none;
+  }
 }
