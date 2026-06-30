@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-clean-v1';
+  const APP_VERSION = '20260630-selfpaced-v2';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',
@@ -122,6 +122,7 @@
     {
       id: 'classic',
       icon: '🎯',
+      image: 'jcso-mode-classic-md.png',
       name: 'Classic Quiz',
       shortName: 'Classic',
       description: 'Straight quiz mode with speed points, streak bonuses, answer reveal, and leaderboard.',
@@ -131,29 +132,32 @@
     {
       id: 'coin-rush',
       icon: '🧰',
+      image: 'jcso-mode-gold-rush-md.png',
       name: 'Coin Rush',
       shortName: 'Coin Rush',
-      description: 'Correct answers open chests. Chests can award gold, triple gold, steal gold, or spring a trap.',
-      scoring: 'The leaderboard is based on gold, not trivia points. Chest events can help or hurt your vault.',
-      objective: 'Build the biggest gold stash before the final question.'
+      description: 'Self-paced questions unlock three mystery chests. Pick one to gain gold, triple gold, lose gold, steal, or raid.',
+      scoring: 'The leaderboard is based on gold. The game ends at the host’s gold goal or time limit.',
+      objective: 'Answer at your own pace, open chests, and reach the gold goal first.'
     },
     {
       id: 'cadet-race',
       icon: '🏁',
+      image: 'jcso-mode-cadet-race-md.png',
       name: 'Cadet Race',
       shortName: 'Race',
-      description: 'Correct answers roll your patrol forward on a track with shortcuts, roadblocks, boosts, and penalties.',
-      scoring: 'The leaderboard is based on distance toward the finish line, not speed points.',
-      objective: 'Be the first patrol to reach the finish line or end with the most distance.'
+      description: 'Self-paced questions unlock three route cards. Pick one to move, boost, shortcut, block, or swap positions.',
+      scoring: 'The leaderboard is based on distance. The game ends at the host’s distance goal or time limit.',
+      objective: 'Answer at your own pace and race to the finish line.'
     },
     {
       id: 'power-battle',
       icon: '🛡️',
+      image: 'jcso-mode-power-battle-md.png',
       name: 'Power Battle',
       shortName: 'Battle',
-      description: 'Correct answers trigger attacks, shields, double strikes, and power surges. Wrong answers can cost health.',
-      scoring: 'The leaderboard is based on battle standing: health, damage, shields, and power.',
-      objective: 'Outlast the room by protecting your health and knocking down opponents.'
+      description: 'Self-paced questions unlock three tactical crates. Pick one to attack, shield, heal, surge, or steal power.',
+      scoring: 'The leaderboard is based on battle power. The game ends at the host’s power goal or time limit.',
+      objective: 'Answer at your own pace, build power, and outplay the room.'
     }
   ];
 

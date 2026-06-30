@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Host JCSO Quest</title>
   <meta name="description" content="Host a live JCSO Quest training game." />
-  <link rel="icon" href="favicon.ico?v=20260630-clean-v1" sizes="any" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-clean-v1" />
+  <link rel="icon" href="favicon.ico?v=20260630-selfpaced-v2" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-selfpaced-v2" />
   <meta name="theme-color" content="#062B72" />
-  <link rel="stylesheet" href="styles.css?v=20260630-clean-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260630-selfpaced-v2" />
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
@@ -16,7 +16,7 @@
     <section class="screen active" id="loading-screen">
       <div class="hero-card compact loading-card">
         <div class="brand-row">
-          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-clean-v1" alt="" /></span>
+          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-selfpaced-v2" alt="" /></span>
           <div>
             <p class="eyebrow">Host</p>
             <h1>JCSO Quest</h1>
@@ -30,7 +30,7 @@
     <section class="screen" id="setup-screen">
       <header class="topbar host-topbar">
         <div class="topbar-brand clean-brand">
-          <img class="topbar-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-clean-v1" alt="JCSO Quest" />
+          <img class="topbar-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-selfpaced-v2" alt="JCSO Quest" />
           <div>
             <p class="eyebrow">Host</p>
             <h1>Set Up Game</h1>
@@ -50,14 +50,15 @@
           <label for="question-set-select">Question set</label>
           <select id="question-set-select"></select>
 
-          <label for="game-mode-select">Game mode</label>
-          <select id="game-mode-select"></select>
-          <div id="mode-preview" class="mode-preview"></div>
+          <div id="selected-mode-card" class="selected-mode-card"></div>
+          <label class="sr-only" for="game-mode-select">Game mode</label>
+          <select id="game-mode-select" class="hidden" aria-hidden="true" tabindex="-1"></select>
+          <div id="mode-preview" class="mode-preview hidden"></div>
 
           <label for="category-select">Category</label>
           <select id="category-select"></select>
 
-          <label for="question-count">Questions</label>
+          <label id="question-count-label" for="question-count">Questions</label>
           <select id="question-count">
             <option value="5">5 quick round</option>
             <option value="10" selected>10 standard round</option>
@@ -67,14 +68,42 @@
             <option value="all">All loaded questions</option>
           </select>
 
-          <label for="timer-select">Timer per question</label>
-          <select id="timer-select">
-            <option value="10">10 seconds</option>
-            <option value="20">20 seconds</option>
-            <option value="30" selected>30 seconds</option>
-            <option value="45">45 seconds</option>
-            <option value="60">60 seconds</option>
-          </select>
+          <div id="classic-timer-wrap" class="setup-control-group">
+            <label for="timer-select">Classic question timer</label>
+            <select id="timer-select">
+              <option value="10">10 seconds</option>
+              <option value="20">20 seconds</option>
+              <option value="30" selected>30 seconds</option>
+              <option value="45">45 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
+          </div>
+
+          <div id="self-paced-options" class="self-paced-options">
+            <div class="setup-control-group">
+              <label id="goal-limit-label" for="goal-limit">Gold goal</label>
+              <select id="goal-limit">
+                <option value="300">300</option>
+                <option value="500" selected>500</option>
+                <option value="750">750</option>
+                <option value="1000">1,000</option>
+                <option value="1500">1,500</option>
+                <option value="2000">2,000</option>
+              </select>
+            </div>
+            <div class="setup-control-group">
+              <label for="game-time-limit">Overall game time</label>
+              <select id="game-time-limit">
+                <option value="0">No time limit</option>
+                <option value="5">5 minutes</option>
+                <option value="10" selected>10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+              </select>
+            </div>
+            <p class="small muted">Self-paced modes end when the goal is reached or the game clock expires.</p>
+          </div>
 
           <div class="toggle-row">
             <label class="switch-label" for="shuffle-toggle">Shuffle answers</label>
@@ -87,12 +116,12 @@
 
         <section class="panel hero-panel quest-panel overview-panel">
           <div class="hero-badge">Quick start</div>
-          <h2>Choose a mode, share the PIN, and start when players are ready.</h2>
-          <p>Players join from their own device, choose a character, and compete in the selected game mode.</p>
+          <h2>Choose your questions, share the PIN, and start when players are ready.</h2>
+          <p>Players join from their own device, choose a character, and compete using the mode you selected.</p>
           <div class="step-list" aria-label="Host steps">
             <div><strong>1</strong><span>Pick setup options</span></div>
             <div><strong>2</strong><span>Share the join PIN</span></div>
-            <div><strong>3</strong><span>Start the round</span></div>
+            <div><strong>3</strong><span>Launch the game</span></div>
           </div>
           <div id="category-summary" class="hidden"></div>
         </section>
@@ -128,6 +157,34 @@
           <button class="primary-btn jumbo" id="start-game" type="button">Start Game</button>
         </section>
       </div>
+    </section>
+
+    <section class="screen" id="play-screen">
+      <header class="game-topbar self-paced-hostbar">
+        <div class="game-meta">
+          <span id="live-mode-label">Game Mode</span>
+          <span id="live-objective-label">Goal</span>
+          <span id="live-time-label">Time</span>
+        </div>
+        <div class="answer-count" id="live-player-count">0 players</div>
+      </header>
+
+      <section class="question-card self-paced-host-card">
+        <div class="question-type">Self-paced game</div>
+        <h2 id="live-headline">Players are answering questions and opening rewards.</h2>
+        <p id="live-subhead" class="host-live-subhead">Keep this host screen open so rewards, steals, and game-ending conditions process live.</p>
+      </section>
+
+      <section class="mode-status-panel" id="live-mode-status-panel"></section>
+
+      <section class="panel leaderboard-panel compact-list live-leaderboard-panel">
+        <p class="eyebrow">Live standings</p>
+        <div id="live-leaderboard" class="leaderboard-list"></div>
+      </section>
+
+      <footer class="game-footer">
+        <button class="danger-btn" id="end-from-play" type="button">End Game</button>
+      </footer>
     </section>
 
     <section class="screen" id="question-screen">
@@ -194,7 +251,7 @@
     </section>
   </main>
 
-  <script src="common.js?v=20260630-clean-v1"></script>
-  <script type="module" src="host.js?v=20260630-clean-v1"></script>
+  <script src="common.js?v=20260630-selfpaced-v2"></script>
+  <script type="module" src="host.js?v=20260630-selfpaced-v2"></script>
 </body>
 </html>

@@ -1,36 +1,35 @@
-# JCSO Quest
+# JCSO Quest — Self-Paced Game Modes Build
 
-Single-folder GitHub Pages build for JCSO Quest.
+This build keeps the project in one flat folder for GitHub Pages uploads.
 
-This version includes:
+## Updated host flow
 
-- Professional JCSO Quest branding
-- Player character selection
-- Live PIN-based multiplayer rooms
-- Actual game modes:
-  - Classic Quiz
-  - Coin Rush
-  - Cadet Race
-  - Power Battle
-- Firebase Realtime Database support
-- Local question banks
-- Cache-busted HTML references: `20260630-clean-v1`
+1. `index.html` → Host a Game
+2. `modes.html` → choose the game mode
+3. `host.html?mode=...` → choose question bank, category, question pool, and game options
+4. Launch the PIN room and start the game
 
-## Uploading to GitHub Pages
+## Modes
 
-Upload every file in this folder directly into the repository root. Do not place files in nested folders.
+- **Classic Quiz**: host-paced Kahoot-style quiz with question timer, reveal, and points leaderboard.
+- **Coin Rush**: self-paced. Correct answers unlock three mystery chests. Chest rewards can give gold, triple gold, steal gold, raid gold, or take gold. The game ends at the gold goal or overall time limit.
+- **Cadet Race**: self-paced. Correct answers unlock route cards and players race toward the distance goal.
+- **Power Battle**: self-paced. Correct answers unlock tactical crates for power, shields, healing, siphons, and battle events.
 
-Important files to replace when updating:
+## Upload notes
+
+Upload all files to the same GitHub Pages folder/repo root. Do not move files into subfolders unless you also update every path.
+
+Important files to replace:
 
 - `index.html`
+- `modes.html`
 - `host.html`
 - `play.html`
-- `styles.css`
 - `common.js`
 - `host.js`
 - `play.js`
-- `firebase-config.js`
-- question bank `.js` files
-- logo, icon, audio, and character files
+- `styles.css`
+- all included `.png`, `.svg`, `.js`, and `.mp3` files
 
-After upload, test in a private/incognito browser tab to avoid cached files.
+After uploading, test with one host tab and at least two player tabs.

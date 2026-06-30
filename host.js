@@ -29,8 +29,13 @@ let lastEndedAudioKey = '';
 
 const RACE_FINISH_DISTANCE = 120;
 const BATTLE_START_HEALTH = 100;
+const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
+const DEFAULT_GOAL_LIMITS = { 'coin-rush': 500, 'cadet-race': 120, 'power-battle': 500 };
+let processingRewardRequests = new Set();
+let endingInProgress = false;
 
 const els = {};
+let selectedModeId = LQ.getParam('mode') || localStorage.getItem('jcsoQuestHostMode') || 'classic';
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -61,9 +66,11 @@ async function init() {
 
 function cacheElements() {
   [
-    'load-status', 'bank-pill', 'question-set-select', 'game-mode-select', 'mode-preview', 'category-select', 'category-summary', 'question-count', 'timer-select',
+    'load-status', 'bank-pill', 'question-set-select', 'selected-mode-card', 'game-mode-select', 'mode-preview', 'category-select', 'category-summary', 'question-count-label', 'question-count', 'timer-select',
+    'classic-timer-wrap', 'self-paced-options', 'goal-limit-label', 'goal-limit', 'game-time-limit',
     'shuffle-toggle', 'create-game', 'setup-status', 'firebase-warning', 'pin-display', 'lobby-mode-pill', 'copy-link',
     'join-url', 'join-qr', 'lobby-players', 'player-count-pill', 'start-game', 'round-label',
+    'live-mode-label', 'live-objective-label', 'live-time-label', 'live-player-count', 'live-headline', 'live-subhead', 'live-mode-status-panel', 'live-leaderboard', 'end-from-play',
     'category-label', 'timer-bar', 'timer-text', 'answer-count', 'question-type', 'question-text',
     'mode-status-panel', 'answers-grid', 'reveal-now', 'next-question', 'reveal-title', 'correct-answer-text',
     'explanation-text', 'mode-reveal-banner', 'answer-bars', 'leaderboard-list', 'winner-title', 'final-mode-summary', 'final-leaderboard',
@@ -83,7 +90,12 @@ function wireEvents() {
     });
   }
   if (els.gameModeSelect) {
-    els.gameModeSelect.addEventListener('change', renderModePreview);
+    els.gameModeSelect.addEventListener('change', () => {
+      selectedModeId = els.gameModeSelect.value || selectedModeId;
+      localStorage.setItem('jcsoQuestHostMode', selectedModeId);
+      renderModePreview();
+      renderGameModeOptions();
+    });
   }
   els.copyLink.addEventListener('click', async () => {
     const ok = await LQ.copyText(playerUrl);
@@ -96,6 +108,7 @@ function wireEvents() {
   els.newGame.addEventListener('click', () => window.location.href = 'host.html');
   els.endFromLobby.addEventListener('click', endGame);
   els.endFromQuestion.addEventListener('click', endGame);
+  if (els.endFromPlay) els.endFromPlay.addEventListener('click', endGame);
 }
 
 function renderSetup() {
@@ -114,7 +127,11 @@ function renderSetup() {
       `<option value="${LQ.escapeAttr(mode.id)}">${mode.icon} ${LQ.escapeHtml(mode.name)}</option>`
     ).join('');
   }
+  if (!LQ.gameModes.some(mode => mode.id === selectedModeId)) selectedModeId = 'classic';
+  if (els.gameModeSelect) els.gameModeSelect.value = selectedModeId;
+  localStorage.setItem('jcsoQuestHostMode', selectedModeId);
   renderModePreview();
+  renderGameModeOptions();
 
   els.bankPill.textContent = bank.length ? `${bank.length} ready` : 'No questions';
 
@@ -137,16 +154,61 @@ function renderSetup() {
 }
 
 function renderModePreview() {
-  if (!els.modePreview) return;
-  const mode = LQ.getGameMode(els.gameModeSelect?.value || 'classic');
-  els.modePreview.innerHTML = `
-    <div class="mode-preview-icon">${mode.icon}</div>
-    <div>
-      <strong>${LQ.escapeHtml(mode.name)}</strong>
-      <p>${LQ.escapeHtml(mode.description)}</p>
-      <small>${LQ.escapeHtml(mode.objective)}</small>
-    </div>
-  `;
+  const mode = LQ.getGameMode(els.gameModeSelect?.value || selectedModeId || 'classic');
+  if (els.modePreview) {
+    els.modePreview.innerHTML = `
+      <div class="mode-preview-icon">${mode.icon}</div>
+      <div>
+        <strong>${LQ.escapeHtml(mode.name)}</strong>
+        <p>${LQ.escapeHtml(mode.description)}</p>
+        <small>${LQ.escapeHtml(mode.objective)}</small>
+      </div>
+    `;
+  }
+  if (els.selectedModeCard) {
+    const labels = mode.id === 'classic'
+      ? ['Host-paced quiz', 'Timed questions', 'Speed points']
+      : ['Self-paced game', 'No question timer', 'Goal or time limit'];
+    els.selectedModeCard.innerHTML = `
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-selfpaced-v2" alt="" loading="lazy" decoding="async" />
+      <div>
+        <p class="eyebrow">Selected mode</p>
+        <h2>${LQ.escapeHtml(mode.name)}</h2>
+        <p>${LQ.escapeHtml(mode.description)}</p>
+        <div class="selected-mode-tags">${labels.map(label => `<span>${LQ.escapeHtml(label)}</span>`).join('')}</div>
+      </div>
+      <a class="ghost-btn mini-change-mode" href="modes.html">Change Mode</a>
+    `;
+  }
+}
+
+function renderGameModeOptions() {
+  const modeId = els.gameModeSelect?.value || selectedModeId || 'classic';
+  const selfPaced = isSelfPacedMode(modeId);
+  if (els.classicTimerWrap) els.classicTimerWrap.classList.toggle('hidden', selfPaced);
+  if (els.selfPacedOptions) els.selfPacedOptions.classList.toggle('hidden', !selfPaced);
+  if (els.questionCountLabel) els.questionCountLabel.textContent = selfPaced ? 'Question pool' : 'Questions';
+  if (!els.goalLimitLabel || !els.goalLimit) return;
+  const labels = {
+    'coin-rush': 'Gold goal',
+    'cadet-race': 'Distance goal',
+    'power-battle': 'Power goal'
+  };
+  const options = {
+    'coin-rush': [300, 500, 750, 1000, 1500, 2000],
+    'cadet-race': [80, 120, 160, 200, 250, 300],
+    'power-battle': [250, 500, 750, 1000, 1500, 2000]
+  };
+  els.goalLimitLabel.textContent = labels[modeId] || 'Goal limit';
+  const values = options[modeId] || options['coin-rush'];
+  const previous = Number(els.goalLimit.value || DEFAULT_GOAL_LIMITS[modeId] || values[1]);
+  els.goalLimit.innerHTML = values.map(value => `<option value="${value}">${LQ.formatScore(value)}</option>`).join('');
+  const chosen = values.includes(previous) ? previous : (DEFAULT_GOAL_LIMITS[modeId] || values[1]);
+  els.goalLimit.value = String(chosen);
+}
+
+function isSelfPacedMode(modeId) {
+  return SELF_PACED_MODES.has(modeId);
 }
 
 async function initFirebase() {
@@ -187,13 +249,15 @@ async function createGame() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       settings,
+      questionBank: selectedQuestions,
       state: {
         phase: 'lobby',
         pin,
         questionIndex: -1,
         questionCount: selectedQuestions.length,
         startedAt: 0,
-        endsAt: 0
+        endsAt: 0,
+        goalLimit: settings.goalLimit || 0
       },
       players: {}
     });
@@ -213,7 +277,7 @@ async function createGame() {
 function getSettings() {
   const questionSetId = els.questionSetSelect?.value || selectedSet?.id || 'docjt';
   const sourceSet = questionSets.find(set => set.id === questionSetId) || selectedSet || questionSets[0] || { id: 'docjt', label: 'DOCJT Questions' };
-  const mode = LQ.getGameMode(els.gameModeSelect?.value || 'classic');
+  const mode = LQ.getGameMode(els.gameModeSelect?.value || selectedModeId || 'classic');
   return {
     questionSetId: sourceSet.id,
     questionSetLabel: sourceSet.label,
@@ -222,7 +286,10 @@ function getSettings() {
     gameModeIcon: mode.icon,
     category: els.categorySelect.value,
     requestedCount: els.questionCount.value,
-    timerSeconds: Number(els.timerSelect.value),
+    timerSeconds: Number(els.timerSelect?.value || 30),
+    goalLimit: Number(els.goalLimit?.value || DEFAULT_GOAL_LIMITS[mode.id] || 500),
+    gameTimeLimitMinutes: Number(els.gameTimeLimit?.value || 0),
+    selfPaced: isSelfPacedMode(mode.id),
     shuffleAnswers: els.shuffleToggle.checked
   };
 }
@@ -272,11 +339,13 @@ function renderFromGame(game) {
       LQ.Sounds.resetCountdown();
       LQ.Sounds.playMusic('question');
     }
+    if (phase === 'play') LQ.Sounds.playMusic('question');
     if (phase === 'reveal') LQ.Sounds.stopMusic();
     if (phase === 'ended') LQ.Sounds.stopMusic();
   }
   if (phase === 'lobby') renderLobbyPlayers(game);
   if (phase === 'question') renderQuestionProgress(game);
+  if (phase === 'play') renderSelfPacedDashboard(game);
   if (phase === 'reveal') renderReveal(game);
   if (phase === 'ended') renderEnded(game);
 }
@@ -307,7 +376,470 @@ function renderLobbyPlayers(game) {
 async function startGame() {
   LQ.Sounds.unlock();
   if (!gamePin || !selectedQuestions.length) return;
+  const modeId = liveGame?.settings?.gameMode || getSettings().gameMode || 'classic';
+  if (isSelfPacedMode(modeId)) {
+    await startSelfPacedGame();
+    return;
+  }
   await nextQuestion();
+}
+
+async function startSelfPacedGame() {
+  const latestSnap = await get(ref(db, `${GAME_ROOT}/${gamePin}`));
+  if (latestSnap.exists()) liveGame = latestSnap.val();
+  const settings = liveGame?.settings || getSettings();
+  const now = Date.now();
+  const timeLimitMinutes = Number(settings.gameTimeLimitMinutes || 0);
+  const endsAt = timeLimitMinutes > 0 ? now + timeLimitMinutes * 60 * 1000 : 0;
+  const players = liveGame?.players || {};
+  const updates = {
+    updatedAt: serverTimestamp(),
+    reveal: null,
+    question: null,
+    'state/phase': 'play',
+    'state/pin': gamePin,
+    'state/questionIndex': -1,
+    'state/questionCount': selectedQuestions.length,
+    'state/startedAt': now,
+    'state/endsAt': endsAt,
+    'state/goalLimit': Number(settings.goalLimit || DEFAULT_GOAL_LIMITS[settings.gameMode] || 500)
+  };
+
+  Object.keys(players).forEach(playerUid => {
+    updates[`players/${playerUid}/score`] = 0;
+    updates[`players/${playerUid}/coins`] = 0;
+    updates[`players/${playerUid}/distance`] = 0;
+    updates[`players/${playerUid}/power`] = 0;
+    updates[`players/${playerUid}/damage`] = 0;
+    updates[`players/${playerUid}/shield`] = 0;
+    updates[`players/${playerUid}/health`] = BATTLE_START_HEALTH;
+    updates[`players/${playerUid}/correct`] = 0;
+    updates[`players/${playerUid}/answered`] = 0;
+    updates[`players/${playerUid}/played`] = 0;
+    updates[`players/${playerUid}/streak`] = 0;
+    updates[`players/${playerUid}/lastGain`] = 0;
+    updates[`players/${playerUid}/lastCoins`] = 0;
+    updates[`players/${playerUid}/lastDistance`] = 0;
+    updates[`players/${playerUid}/lastPower`] = 0;
+    updates[`players/${playerUid}/lastDamage`] = 0;
+    updates[`players/${playerUid}/lastHealthChange`] = 0;
+    updates[`players/${playerUid}/lastShield`] = 0;
+    updates[`players/${playerUid}/lastCorrect`] = false;
+    updates[`players/${playerUid}/lastChoiceIndex`] = -1;
+    updates[`players/${playerUid}/lastModeLabel`] = 'Game started. Answer a question to unlock rewards.';
+    updates[`players/${playerUid}/lastCorrectAnswer`] = '';
+    updates[`players/${playerUid}/lastExplanation`] = '';
+    updates[`players/${playerUid}/selfQuestionIndex`] = 0;
+    updates[`players/${playerUid}/resultReady`] = false;
+    updates[`players/${playerUid}/pendingRewardRequest`] = null;
+  });
+
+  await update(ref(db, `${GAME_ROOT}/${gamePin}`), updates);
+  LQ.Sounds.playMusic('question');
+  LQ.showScreen('play');
+}
+
+function renderSelfPacedDashboard(game) {
+  const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
+  const playersObj = game.players || {};
+  const players = rankPlayersForMode(playersObj, mode.id);
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS[mode.id] || 500);
+  cleanupTimer();
+
+  if (els.liveModeLabel) els.liveModeLabel.textContent = `${mode.icon} ${mode.name}`;
+  if (els.liveObjectiveLabel) els.liveObjectiveLabel.textContent = `${objectiveLabel(mode.id)}: ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
+  if (els.livePlayerCount) els.livePlayerCount.textContent = `${players.length} player${players.length === 1 ? '' : 's'}`;
+  if (els.liveHeadline) els.liveHeadline.textContent = liveHeadline(mode.id, players[0], goal);
+  if (els.liveSubhead) els.liveSubhead.textContent = 'Players answer at their own pace. Correct answers unlock three mystery rewards.';
+
+  updateSelfPacedTimeLabel(game);
+  timerId = setInterval(() => {
+    updateSelfPacedTimeLabel(liveGame || game);
+    if (shouldEndSelfPaced(liveGame || game)) endGame();
+  }, 1000);
+
+  renderSelfPacedModeStatus(game, els.liveModeStatusPanel);
+  renderLeaderboard(els.liveLeaderboard, playersObj);
+  processPendingRewardRequests(game);
+  if (shouldEndSelfPaced(game)) endGame();
+  LQ.showScreen('play');
+}
+
+function updateSelfPacedTimeLabel(game) {
+  if (!els.liveTimeLabel) return;
+  const endsAt = Number(game?.state?.endsAt || 0);
+  if (!endsAt) {
+    els.liveTimeLabel.textContent = 'No time limit';
+    return;
+  }
+  const ms = Math.max(0, endsAt - Date.now());
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  els.liveTimeLabel.textContent = `Time: ${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function liveHeadline(modeId, leader, goal) {
+  if (!leader) return 'Waiting for players to begin.';
+  const name = leader.name || 'Leader';
+  if (modeId === 'coin-rush') return `${name} leads with ${LQ.formatScore(leader.coins || 0)} gold. Goal: ${LQ.formatScore(goal)}.`;
+  if (modeId === 'cadet-race') return `${name} leads at ${LQ.formatScore(leader.distance || 0)} ft. Finish: ${LQ.formatScore(goal)} ft.`;
+  if (modeId === 'power-battle') return `${name} leads with ${LQ.formatScore(leader.power || 0)} power. Goal: ${LQ.formatScore(goal)}.`;
+  return `${name} is leading.`;
+}
+
+function objectiveLabel(modeId) {
+  if (modeId === 'coin-rush') return 'Gold goal';
+  if (modeId === 'cadet-race') return 'Distance goal';
+  if (modeId === 'power-battle') return 'Power goal';
+  return 'Goal';
+}
+
+function objectiveUnit(modeId) {
+  if (modeId === 'coin-rush') return 'gold';
+  if (modeId === 'cadet-race') return 'ft';
+  if (modeId === 'power-battle') return 'power';
+  return 'points';
+}
+
+function renderSelfPacedModeStatus(game, container) {
+  if (!container) return;
+  const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
+  const players = rankPlayersForMode(game.players || {}, mode.id).slice(0, 8);
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS[mode.id] || 500);
+  if (mode.id === 'coin-rush') {
+    container.innerHTML = `
+      <div class="mode-objective"><strong>🧰 Coin Rush</strong><span>Players pick one of three mystery chests after each correct answer.</span></div>
+      <div class="coin-board">
+        ${players.map((p, i) => `<div class="coin-card ${i === 0 ? 'first' : ''}">${LQ.avatarMarkup(p, 'avatar-img')}<strong>${LQ.escapeHtml(p.name || 'Player')}</strong><span>🪙 ${LQ.formatScore(p.coins || 0)} / ${LQ.formatScore(goal)}</span><small>${LQ.escapeHtml(p.lastModeLabel || '')}</small></div>`).join('') || '<span class="muted">No players yet.</span>'}
+      </div>
+    `;
+    return;
+  }
+  if (mode.id === 'cadet-race') {
+    container.innerHTML = `
+      <div class="mode-objective"><strong>🏁 Cadet Race</strong><span>Players pick one of three route cards after each correct answer.</span></div>
+      <div class="race-board">
+        ${players.map(p => {
+          const distance = LQ.clamp(Number(p.distance || 0), 0, goal);
+          const percent = (distance / Math.max(1, goal)) * 100;
+          return `<div class="race-lane"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="race-track"><span style="width:${percent}%"></span><em style="left:${percent}%">🚓</em></div><small>${LQ.formatScore(distance)} / ${LQ.formatScore(goal)} ft</small></div>`;
+        }).join('') || '<span class="muted">No racers yet.</span>'}
+      </div>
+    `;
+    return;
+  }
+  container.innerHTML = `
+    <div class="mode-objective"><strong>🛡️ Power Battle</strong><span>Players pick one of three tactical crates after each correct answer.</span></div>
+    <div class="battle-board">
+      ${players.map(p => {
+        const powerPercent = LQ.clamp((Number(p.power || 0) / Math.max(1, goal)) * 100, 0, 100);
+        const health = LQ.clamp(Number(p.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
+        return `<div class="battle-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${health}%"></i><b style="width:${powerPercent}%"></b></div><small>${LQ.formatScore(p.power || 0)} / ${LQ.formatScore(goal)} power · ${health} HP</small></div>`;
+      }).join('') || '<span class="muted">No battlers yet.</span>'}
+    </div>
+  `;
+}
+
+async function processPendingRewardRequests(game) {
+  if (!gamePin || game.state?.phase !== 'play') return;
+  const modeId = game.settings?.gameMode || 'coin-rush';
+  const players = game.players || {};
+  const questionBank = game.questionBank || selectedQuestions || [];
+  for (const [playerUid, player] of Object.entries(players)) {
+    const request = player.pendingRewardRequest;
+    if (!request || !request.requestId) continue;
+    const processKey = `${playerUid}:${request.requestId}`;
+    if (processingRewardRequests.has(processKey)) continue;
+    processingRewardRequests.add(processKey);
+    try {
+      const updates = resolveSelfPacedReward(game, playerUid, request, questionBank, modeId);
+      updates.updatedAt = serverTimestamp();
+      await update(ref(db, `${GAME_ROOT}/${gamePin}`), updates);
+    } catch (err) {
+      console.error('Reward processing failed', err);
+    } finally {
+      processingRewardRequests.delete(processKey);
+    }
+  }
+}
+
+function resolveSelfPacedReward(game, playerUid, request, questionBank, modeId) {
+  const players = game.players || {};
+  const player = players[playerUid] || {};
+  const qIndex = Number(request.questionIndex || 0) % Math.max(1, questionBank.length);
+  const question = questionBank[qIndex] || {};
+  const correct = Number(request.choiceIndex) === Number(question.answer || 0);
+  const nextStreak = correct ? Number(player.streak || 0) + 1 : 0;
+  const updates = {
+    [`players/${playerUid}/pendingRewardRequest`]: null,
+    [`players/${playerUid}/resultReady`]: true,
+    [`players/${playerUid}/answered`] : Number(player.answered || 0) + 1,
+    [`players/${playerUid}/played`] : Number(player.played || 0) + 1,
+    [`players/${playerUid}/streak`] : nextStreak,
+    [`players/${playerUid}/lastCorrect`] : correct,
+    [`players/${playerUid}/lastChoiceIndex`] : Number(request.choiceIndex ?? -1),
+    [`players/${playerUid}/lastCorrectAnswer`] : (question.choices || [])[Number(question.answer || 0)] || '',
+    [`players/${playerUid}/lastExplanation`] : question.explanation || '',
+    [`players/${playerUid}/lastCoins`] : 0,
+    [`players/${playerUid}/lastDistance`] : 0,
+    [`players/${playerUid}/lastPower`] : 0,
+    [`players/${playerUid}/lastDamage`] : 0,
+    [`players/${playerUid}/lastHealthChange`] : 0,
+    [`players/${playerUid}/lastShield`] : 0
+  };
+
+  if (!correct) {
+    updates[`players/${playerUid}/lastGain`] = 0;
+    updates[`players/${playerUid}/lastModeLabel`] = 'No reward — answer was not correct.';
+    return updates;
+  }
+
+  updates[`players/${playerUid}/correct`] = Number(player.correct || 0) + 1;
+  const reward = calculateSelfPacedReward(modeId, game, playerUid, request, nextStreak);
+  Object.assign(updates, reward.updates);
+  updates[`players/${playerUid}/lastModeLabel`] = reward.label;
+  updates[`players/${playerUid}/lastGain`] = reward.lastGain;
+  updates[`players/${playerUid}/lastRewardType`] = reward.type;
+  return updates;
+}
+
+function calculateSelfPacedReward(modeId, game, playerUid, request, streak) {
+  if (modeId === 'cadet-race') return calculateRaceCardReward(game, playerUid, request, streak);
+  if (modeId === 'power-battle') return calculateBattleCrateReward(game, playerUid, request, streak);
+  return calculateCoinChestReward(game, playerUid, request, streak);
+}
+
+function calculateCoinChestReward(game, playerUid, request, streak) {
+  const players = game.players || {};
+  const player = players[playerUid] || {};
+  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-coin`;
+  const roll = seededNumber(seed);
+  const base = Math.round(65 + seededNumber(`${seed}-base`) * 70 + Math.min(streak * 10, 80));
+  let coins = Number(player.coins || 0);
+  const updates = {};
+  let delta = 0;
+  let label = '';
+  let type = 'gold';
+
+  if (roll < 0.42) {
+    delta = base;
+    label = `Gold chest: +${delta} gold`;
+    type = 'chest';
+  } else if (roll < 0.64) {
+    delta = base * 3;
+    label = `Triple gold: +${delta} gold`;
+    type = 'triple';
+  } else if (roll < 0.78) {
+    delta = -Math.min(coins, Math.max(30, Math.round(coins * 0.25)));
+    label = delta < 0 ? `Trap chest took ${Math.abs(delta)} gold` : 'Trap chest was empty — no gold lost';
+    type = 'trap';
+  } else if (roll < 0.94) {
+    const targetUid = pickRichTarget(playerUid, players, `${seed}-steal`);
+    if (targetUid) {
+      const target = players[targetUid] || {};
+      const stolen = Math.min(Number(target.coins || 0), Math.max(35, Math.round(Number(target.coins || 0) * 0.30)));
+      delta = stolen;
+      coins += stolen;
+      const targetCoins = Math.max(0, Number(target.coins || 0) - stolen);
+      updates[`players/${targetUid}/coins`] = targetCoins;
+      updates[`players/${targetUid}/score`] = targetCoins;
+      updates[`players/${targetUid}/lastCoins`] = -stolen;
+      updates[`players/${targetUid}/lastGain`] = -stolen;
+      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} stole ${stolen} gold from your vault.`;
+      label = `Steal chest: took ${stolen} gold from ${target.name || 'another player'}`;
+      type = 'steal';
+    } else {
+      delta = base;
+      label = `Steal chest found no target, so you banked +${delta} gold`;
+      type = 'chest';
+    }
+  } else {
+    let total = 0;
+    Object.entries(players).forEach(([otherUid, other]) => {
+      if (otherUid === playerUid || Number(other.coins || 0) <= 0) return;
+      const taken = Math.min(Number(other.coins || 0), Math.max(10, Math.round(Number(other.coins || 0) * 0.12)));
+      total += taken;
+      const nextCoins = Math.max(0, Number(other.coins || 0) - taken);
+      updates[`players/${otherUid}/coins`] = nextCoins;
+      updates[`players/${otherUid}/score`] = nextCoins;
+      updates[`players/${otherUid}/lastCoins`] = -taken;
+      updates[`players/${otherUid}/lastGain`] = -taken;
+      updates[`players/${otherUid}/lastModeLabel`] = `${player.name || 'A player'} raided ${taken} gold from your vault.`;
+    });
+    delta = total || base;
+    label = total ? `Vault raid: collected ${total} gold from the room` : `Vault raid bonus: +${delta} gold`;
+    type = 'raid';
+  }
+
+  if (type !== 'steal') coins += delta;
+  coins = Math.max(0, Math.round(coins));
+  updates[`players/${playerUid}/coins`] = coins;
+  updates[`players/${playerUid}/score`] = coins;
+  updates[`players/${playerUid}/lastCoins`] = Math.round(delta);
+  return { updates, label, lastGain: Math.round(delta), type };
+}
+
+function calculateRaceCardReward(game, playerUid, request, streak) {
+  const players = game.players || {};
+  const player = players[playerUid] || {};
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || RACE_FINISH_DISTANCE);
+  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-race`;
+  const roll = seededNumber(seed);
+  const base = Math.round(12 + seededNumber(`${seed}-base`) * 18 + Math.min(streak * 4, 30));
+  const updates = {};
+  let current = Number(player.distance || 0);
+  let move = 0;
+  let label = '';
+  let type = 'route';
+
+  if (roll < 0.42) {
+    move = base;
+    label = `Patrol route: +${move} ft`;
+    type = 'roll';
+  } else if (roll < 0.64) {
+    move = base * 2;
+    label = `Shortcut card: +${move} ft`;
+    type = 'shortcut';
+  } else if (roll < 0.78) {
+    move = -Math.min(current, Math.max(8, Math.round(current * 0.15)));
+    label = move < 0 ? `Roadblock: ${move} ft` : 'Roadblock at the start — no distance lost';
+    type = 'roadblock';
+  } else if (roll < 0.92) {
+    const targetUid = pickLeaderTarget(playerUid, players, 'distance', `${seed}-swap`);
+    if (targetUid && Number(players[targetUid].distance || 0) > current) {
+      const targetDistance = Number(players[targetUid].distance || 0);
+      updates[`players/${targetUid}/distance`] = current;
+      updates[`players/${targetUid}/score`] = current;
+      updates[`players/${targetUid}/lastDistance`] = current - targetDistance;
+      updates[`players/${targetUid}/lastGain`] = current - targetDistance;
+      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} swapped patrol positions with you.`;
+      move = targetDistance - current;
+      current = targetDistance;
+      label = `Swap card: traded places with ${players[targetUid].name || 'the leader'}`;
+      type = 'swap';
+    } else {
+      move = base + 15;
+      label = `Siren boost: +${move} ft`;
+      type = 'boost';
+    }
+  } else {
+    move = base + 35;
+    label = `Highway sprint: +${move} ft`;
+    type = 'sprint';
+  }
+
+  const distance = LQ.clamp(Math.round(current + move), 0, goal);
+  const actualMove = distance - Number(player.distance || 0);
+  updates[`players/${playerUid}/distance`] = distance;
+  updates[`players/${playerUid}/score`] = distance;
+  updates[`players/${playerUid}/lastDistance`] = actualMove;
+  return { updates, label: distance >= goal ? `${label} Finish line reached!` : label, lastGain: actualMove, type };
+}
+
+function calculateBattleCrateReward(game, playerUid, request, streak) {
+  const players = game.players || {};
+  const player = players[playerUid] || {};
+  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-battle`;
+  const roll = seededNumber(seed);
+  const base = Math.round(40 + seededNumber(`${seed}-base`) * 60 + Math.min(streak * 12, 100));
+  const updates = {};
+  let power = Number(player.power || 0);
+  let shield = Number(player.shield || 0);
+  let health = Number(player.health ?? BATTLE_START_HEALTH);
+  let deltaPower = 0;
+  let label = '';
+  let type = 'power';
+
+  if (roll < 0.38) {
+    deltaPower = base;
+    label = `Power crate: +${deltaPower} power`;
+    type = 'surge';
+  } else if (roll < 0.58) {
+    deltaPower = base * 2;
+    label = `Double charge: +${deltaPower} power`;
+    type = 'double';
+  } else if (roll < 0.72) {
+    const lost = Math.min(power, Math.max(30, Math.round(power * 0.20)));
+    deltaPower = -lost;
+    label = lost ? `Overload trap: -${lost} power` : 'Overload trap fizzled — no power lost';
+    type = 'trap';
+  } else if (roll < 0.86) {
+    const shieldGain = Math.round(base * 0.7);
+    shield = LQ.clamp(shield + shieldGain, 0, 250);
+    deltaPower = Math.round(base * 0.35);
+    updates[`players/${playerUid}/lastShield`] = shieldGain;
+    label = `Shield crate: +${shieldGain} shield and +${deltaPower} power`;
+    type = 'shield';
+  } else if (roll < 0.96) {
+    const targetUid = pickLeaderTarget(playerUid, players, 'power', `${seed}-siphon`);
+    if (targetUid && Number(players[targetUid].power || 0) > 0) {
+      const target = players[targetUid];
+      const stolen = Math.min(Number(target.power || 0), Math.max(35, Math.round(Number(target.power || 0) * 0.25)));
+      deltaPower = stolen;
+      const targetPower = Math.max(0, Number(target.power || 0) - stolen);
+      updates[`players/${targetUid}/power`] = targetPower;
+      updates[`players/${targetUid}/score`] = targetPower;
+      updates[`players/${targetUid}/lastPower`] = -stolen;
+      updates[`players/${targetUid}/lastGain`] = -stolen;
+      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} siphoned ${stolen} power from you.`;
+      label = `Siphon crate: took ${stolen} power from ${target.name || 'another player'}`;
+      type = 'siphon';
+    } else {
+      deltaPower = base;
+      label = `Siphon crate found no target, so you gained +${deltaPower} power`;
+      type = 'surge';
+    }
+  } else {
+    health = LQ.clamp(health + 20, 0, BATTLE_START_HEALTH);
+    deltaPower = base + 50;
+    updates[`players/${playerUid}/lastHealthChange`] = 20;
+    label = `Command boost: +${deltaPower} power and +20 HP`;
+    type = 'critical';
+  }
+
+  power = Math.max(0, Math.round(power + deltaPower));
+  updates[`players/${playerUid}/power`] = power;
+  updates[`players/${playerUid}/score`] = power;
+  updates[`players/${playerUid}/shield`] = Math.round(shield);
+  updates[`players/${playerUid}/health`] = Math.round(health);
+  updates[`players/${playerUid}/lastPower`] = Math.round(deltaPower);
+  return { updates, label, lastGain: Math.round(deltaPower), type };
+}
+
+function pickRichTarget(uid, players, seed) {
+  const options = Object.entries(players)
+    .filter(([otherUid, p]) => otherUid !== uid && Number(p.coins || 0) > 0)
+    .sort((a, b) => Number(b[1].coins || 0) - Number(a[1].coins || 0));
+  if (!options.length) return '';
+  const top = options.slice(0, Math.min(4, options.length));
+  const index = Math.floor(seededNumber(seed) * top.length) % top.length;
+  return top[index][0];
+}
+
+function pickLeaderTarget(uid, players, field, seed) {
+  const options = Object.entries(players)
+    .filter(([otherUid, p]) => otherUid !== uid && Number(p[field] || 0) > 0)
+    .sort((a, b) => Number(b[1][field] || 0) - Number(a[1][field] || 0));
+  if (!options.length) return '';
+  const top = options.slice(0, Math.min(4, options.length));
+  const index = Math.floor(seededNumber(seed) * top.length) % top.length;
+  return top[index][0];
+}
+
+function shouldEndSelfPaced(game) {
+  if (!game || game.state?.phase !== 'play' || endingInProgress) return false;
+  const modeId = game.settings?.gameMode || 'coin-rush';
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS[modeId] || 500);
+  const endsAt = Number(game.state?.endsAt || 0);
+  if (endsAt && Date.now() >= endsAt) return true;
+  return Object.values(game.players || {}).some(player => Number(playerStatForGoal(player, modeId)) >= goal);
+}
+
+function playerStatForGoal(player, modeId) {
+  if (modeId === 'coin-rush') return player.coins || 0;
+  if (modeId === 'cadet-race') return player.distance || 0;
+  if (modeId === 'power-battle') return player.power || 0;
+  return player.score || 0;
 }
 
 async function nextQuestion() {
@@ -683,14 +1215,14 @@ function renderLeaderboard(container, playersObj, options = {}) {
 function formatLeaderboardScore(p, modeId, value = Number(p.score || 0)) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(value)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(value)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(value)} battle`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(value)} power`;
   return `${LQ.formatScore(value)} pts`;
 }
 
 function scoreSuffix(modeId) {
   if (modeId === 'coin-rush') return ' gold';
   if (modeId === 'cadet-race') return ' ft';
-  if (modeId === 'power-battle') return ' battle';
+  if (modeId === 'power-battle') return ' power';
   return ' pts';
 }
 
@@ -703,7 +1235,7 @@ function formatLeaderboardDetail(p, modeId) {
     return `${base} · ${LQ.formatScore(p.distance || 0)} / ${RACE_FINISH_DISTANCE} ft${Number(p.lastDistance || 0) ? ` · ${formatSigned(p.lastDistance)} ft` : ''}`;
   }
   if (modeId === 'power-battle') {
-    return `${base} · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(p.damage || 0)} dmg · ${LQ.formatScore(p.shield || 0)} shield`;
+    return `${base} · ${LQ.formatScore(p.power || 0)} power · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(p.shield || 0)} shield`;
   }
   return `${base}${Number(p.lastGain || 0) ? ` · ${formatSigned(p.lastGain)} pts` : ''}`;
 }
@@ -765,7 +1297,7 @@ function renderModeStatus(game) {
 function formatModeStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.damage || 0)} dmg`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -1161,7 +1693,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.power || 0) - Number(a.power || 0)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.power || 0) - Number(a.power || 0)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }
@@ -1182,7 +1714,8 @@ function formatSigned(value) {
 }
 
 async function endGame() {
-  if (!gamePin) return;
+  if (!gamePin || endingInProgress) return;
+  endingInProgress = true;
   clearAutoReveal();
   cleanupTimer();
   LQ.Sounds.stopMusic();

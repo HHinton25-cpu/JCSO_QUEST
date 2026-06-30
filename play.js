@@ -21,9 +21,21 @@ let lastPhase = '';
 let lastRevealAudioKey = '';
 let lastGainAnimationKey = '';
 let lastEndedAudioKey = '';
+let localChestQuestionKey = '';
+let localChestChoiceIndex = -1;
+let rewardSubmitInProgress = false;
 
 const RACE_FINISH_DISTANCE = 120;
 const BATTLE_START_HEALTH = 100;
+const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
+const GOLD_RUSH_IMAGES = {
+  basic: 'gold-rush-chest-basic-md.png',
+  rare: 'gold-rush-chest-rare-md.png',
+  open: 'gold-rush-chest-open-md.png',
+  coins: 'gold-rush-coin-pile-md.png',
+  gems: 'gold-rush-gem-pile-md.png',
+  vault: 'gold-rush-vault-open-md.png'
+};
 
 const els = {};
 
@@ -51,7 +63,7 @@ function cacheElements() {
   [
     'firebase-warning', 'pin-input', 'name-input', 'avatar-select', 'join-game', 'join-status', 'lobby-name',
     'lobby-avatar', 'lobby-mode', 'lobby-pin', 'player-round', 'player-score', 'player-mode', 'player-coins', 'player-timer', 'player-category',
-    'player-question', 'player-answers', 'answer-status', 'answered-score', 'player-result-card',
+    'player-question', 'player-answers', 'chest-panel', 'next-self-question', 'answer-status', 'answered-score', 'player-result-card',
     'player-result-icon', 'player-result-label', 'player-gain', 'player-correct-answer', 'player-mode-event',
     'player-explanation', 'player-total-score', 'player-rank', 'final-player-title', 'player-final-list'
   ].forEach(id => {
@@ -69,6 +81,7 @@ function wireEvents() {
   els.pinInput.addEventListener('input', () => {
     els.pinInput.value = els.pinInput.value.replace(/\D/g, '').slice(0, 6);
   });
+  if (els.nextSelfQuestion) els.nextSelfQuestion.addEventListener('click', nextSelfPacedQuestion);
 }
 
 function renderAvatarSelector() {
@@ -158,6 +171,11 @@ async function joinGame() {
     lastModeLabel: '',
     lastCorrect: false,
     lastChoiceIndex: -1,
+    lastCorrectAnswer: '',
+    lastExplanation: '',
+    selfQuestionIndex: 0,
+    resultReady: false,
+    pendingRewardRequest: null,
     online: true,
     joinedAt: serverTimestamp(),
     lastSeen: serverTimestamp()
@@ -194,6 +212,7 @@ function renderFromGame(game) {
       LQ.Sounds.resetCountdown();
       LQ.Sounds.playMusic('question');
     }
+    if (phase === 'play') LQ.Sounds.playMusic('question');
     if (phase === 'reveal') LQ.Sounds.stopMusic();
     if (phase === 'ended') LQ.Sounds.stopMusic();
   }
@@ -204,6 +223,7 @@ function renderFromGame(game) {
   }
   if (phase === 'lobby') renderLobby(game);
   if (phase === 'question') renderQuestion(game);
+  if (phase === 'play') renderSelfPacedPlay(game);
   if (phase === 'reveal') renderReveal(game);
   if (phase === 'ended') renderEnded(game);
 }
@@ -287,6 +307,10 @@ function cleanupTimer() {
 }
 
 async function submitAnswer(choiceIndex) {
+  if (liveGame?.state?.phase === 'play') {
+    await submitSelfPacedAnswer(choiceIndex);
+    return;
+  }
   if (!joinedPin || !liveGame || localAnswered) return;
   const index = Number(liveGame.state?.questionIndex ?? -1);
   if (index < 0 || liveGame.state?.phase !== 'question') return;
@@ -318,6 +342,262 @@ function getMyAnswer(game) {
   const index = Number(game.state?.questionIndex ?? -1);
   if (index < 0) return null;
   return game.answers?.[index]?.[uid] || null;
+}
+
+function renderSelfPacedPlay(game) {
+  cleanupTimer();
+  const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
+  const me = game.players?.[uid] || {};
+  const questionBank = game.questionBank || [];
+  if (!questionBank.length) {
+    LQ.setStatus(els.answerStatus, 'The host has not loaded questions for this game.', 'error');
+    LQ.showScreen('question');
+    return;
+  }
+
+  const qIndex = Number(me.selfQuestionIndex || 0) % questionBank.length;
+  const q = questionBank[qIndex];
+  const questionKey = `${qIndex}_${q.id || q.question}`;
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || 500);
+
+  els.playerRound.textContent = `Self-paced · Question ${Number(me.played || 0) + 1}`;
+  els.playerScore.textContent = formatMainPlayerStat(me, mode.id);
+  if (els.playerMode) els.playerMode.textContent = `${mode.icon} ${mode.shortName || mode.name}`;
+  if (els.playerCoins) els.playerCoins.textContent = `${formatPlayerModeStat(me, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
+  if (els.playerTimer) els.playerTimer.textContent = timeLeftLabel(game);
+  els.playerCategory.textContent = q.category || 'Category';
+  els.playerQuestion.textContent = q.question || 'Pick your answer';
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel?.classList.add('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+
+  if (me.pendingRewardRequest) {
+    renderOpeningReward(mode.id);
+    LQ.showScreen('question');
+    return;
+  }
+
+  if (me.resultReady) {
+    renderSelfPacedResult(me, mode.id);
+    LQ.showScreen('question');
+    return;
+  }
+
+  if (localChestQuestionKey === questionKey && localChestChoiceIndex >= 0) {
+    renderChestChoices(mode.id, qIndex, localChestChoiceIndex);
+    LQ.showScreen('question');
+    return;
+  }
+
+  els.playerAnswers.innerHTML = (q.choices || []).map((choice, i) => `
+    <button type="button" class="answer-btn ${LQ.answerStyles[i % LQ.answerStyles.length]}" data-choice-index="${i}">
+      <span class="shape">${LQ.answerShapes[i % LQ.answerShapes.length]}</span>
+      <span>${LQ.escapeHtml(choice)}</span>
+    </button>
+  `).join('');
+  document.querySelectorAll('[data-choice-index]').forEach(button => {
+    button.addEventListener('click', () => submitSelfPacedAnswer(Number(button.dataset.choiceIndex)));
+  });
+  LQ.setStatus(els.answerStatus, 'Answer correctly to unlock three mystery rewards. No question timer.', '');
+  LQ.showScreen('question');
+}
+
+function timeLeftLabel(game) {
+  const endsAt = Number(game?.state?.endsAt || 0);
+  if (!endsAt) return '∞';
+  const ms = Math.max(0, endsAt - Date.now());
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function objectiveUnit(modeId) {
+  if (modeId === 'coin-rush') return 'gold';
+  if (modeId === 'cadet-race') return 'ft';
+  if (modeId === 'power-battle') return 'power';
+  return 'points';
+}
+
+async function submitSelfPacedAnswer(choiceIndex) {
+  if (!joinedPin || !liveGame || rewardSubmitInProgress) return;
+  const game = liveGame;
+  if (game.state?.phase !== 'play') return;
+  const me = game.players?.[uid] || {};
+  if (me.pendingRewardRequest || me.resultReady) return;
+  const questionBank = game.questionBank || [];
+  if (!questionBank.length) return;
+  const qIndex = Number(me.selfQuestionIndex || 0) % questionBank.length;
+  const q = questionBank[qIndex];
+  const questionKey = `${qIndex}_${q.id || q.question}`;
+  const correct = Number(choiceIndex) === Number(q.answer || 0);
+  document.querySelectorAll('[data-choice-index]').forEach(btn => btn.disabled = true);
+  LQ.Sounds.answerSent();
+
+  if (correct && SELF_PACED_MODES.has(game.settings?.gameMode || 'coin-rush')) {
+    localChestQuestionKey = questionKey;
+    localChestChoiceIndex = choiceIndex;
+    renderChestChoices(game.settings?.gameMode || 'coin-rush', qIndex, choiceIndex);
+    LQ.setStatus(els.answerStatus, 'Correct — pick one reward chest.', 'ok');
+    return;
+  }
+
+  await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
+    answered: Number(me.answered || 0) + 1,
+    played: Number(me.played || 0) + 1,
+    streak: 0,
+    resultReady: true,
+    lastCorrect: false,
+    lastChoiceIndex: choiceIndex,
+    lastGain: 0,
+    lastCoins: 0,
+    lastDistance: 0,
+    lastPower: 0,
+    lastDamage: 0,
+    lastHealthChange: 0,
+    lastShield: 0,
+    lastModeLabel: 'Incorrect — no reward chest this question.',
+    lastCorrectAnswer: (q.choices || [])[Number(q.answer || 0)] || '',
+    lastExplanation: q.explanation || '',
+    lastSeen: serverTimestamp()
+  });
+}
+
+function renderChestChoices(modeId, questionIndex, choiceIndex) {
+  if (!els.chestPanel) return;
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  const title = modeId === 'cadet-race' ? 'Choose a route card' : modeId === 'power-battle' ? 'Choose a tactical crate' : 'Choose a reward chest';
+  const subtitle = modeId === 'coin-rush'
+    ? 'Pick one of the three mystery chests. It can give gold, triple gold, steal gold, raid the room, or take some of your gold.'
+    : modeId === 'cadet-race'
+      ? 'Pick one of the three route cards. It can move you forward, boost you, swap positions, or slow you down.'
+      : 'Pick one of the three tactical crates. It can add power, shield you, heal you, steal power, or overload.';
+  els.chestPanel.innerHTML = `
+    <div class="chest-intro">
+      <p class="eyebrow">Correct answer</p>
+      <h2>${title}</h2>
+      <p>${subtitle}</p>
+    </div>
+    <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : ''}">
+      ${[0, 1, 2].map(i => renderRewardChoiceButton(modeId, questionIndex, choiceIndex, i)).join('')}
+    </div>
+  `;
+  els.chestPanel.querySelectorAll('[data-chest-index]').forEach(button => {
+    button.addEventListener('click', () => chooseRewardChest(questionIndex, choiceIndex, Number(button.dataset.chestIndex)));
+  });
+}
+
+function renderRewardChoiceButton(modeId, questionIndex, choiceIndex, chestIndex) {
+  if (modeId === 'coin-rush') {
+    const image = coinRushChestImage(questionIndex, choiceIndex, chestIndex);
+    return `
+      <button type="button" class="chest-choice gold-chest-choice" data-chest-index="${chestIndex}">
+        ${assetImage(image, `Mystery chest ${chestIndex + 1}`, 'chest-choice-img')}
+        <strong>Chest ${chestIndex + 1}</strong>
+        <small>Mystery reward</small>
+      </button>
+    `;
+  }
+  const label = modeId === 'cadet-race' ? 'Route' : 'Crate';
+  const icon = modeId === 'cadet-race' ? '🏁' : '🛡️';
+  return `<button type="button" class="chest-choice" data-chest-index="${chestIndex}"><span>${icon}</span><strong>${label} ${chestIndex + 1}</strong><small>Mystery reward</small></button>`;
+}
+
+function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
+  const variants = [GOLD_RUSH_IMAGES.basic, GOLD_RUSH_IMAGES.rare, GOLD_RUSH_IMAGES.basic];
+  const offset = Math.floor(seededUnit(`${questionIndex}:${choiceIndex}:gold-chests`) * variants.length) % variants.length;
+  return variants[(chestIndex + offset) % variants.length];
+}
+
+function assetImage(src, alt, className) {
+  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-selfpaced-v2" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
+}
+
+function seededUnit(seed) {
+  let hash = 2166136261;
+  const text = String(seed || 'seed');
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) % 100000) / 100000;
+}
+
+
+async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
+  if (!joinedPin || !liveGame || rewardSubmitInProgress) return;
+  rewardSubmitInProgress = true;
+  const requestId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  localChestQuestionKey = '';
+  localChestChoiceIndex = -1;
+  if (els.chestPanel) {
+    els.chestPanel.innerHTML = '<div class="chest-opening"><div class="loader small-loader"></div><h2>Opening chest…</h2><p>The host is resolving your reward.</p></div>';
+  }
+  try {
+    await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
+      pendingRewardRequest: {
+        requestId,
+        modeId: liveGame.settings?.gameMode || 'coin-rush',
+        questionIndex,
+        choiceIndex,
+        chestIndex,
+        createdAt: Date.now()
+      },
+      resultReady: false,
+      lastModeLabel: 'Opening chest…',
+      lastSeen: serverTimestamp()
+    });
+  } finally {
+    rewardSubmitInProgress = false;
+  }
+}
+
+function renderOpeningReward(modeId) {
+  els.playerAnswers.innerHTML = '';
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  if (els.chestPanel) {
+    els.chestPanel.classList.remove('hidden');
+    const art = modeId === 'coin-rush' ? assetImage(GOLD_RUSH_IMAGES.open, 'Opening chest', 'opening-chest-img') : '<div class="loader small-loader"></div>';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art">${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your chest is being opened.' : 'Your game reward is being resolved.'}</p></div>`;
+  }
+  LQ.setStatus(els.answerStatus, 'Opening reward…', '');
+}
+
+function renderSelfPacedResult(player, modeId) {
+  els.playerAnswers.innerHTML = '';
+  const correct = Boolean(player.lastCorrect);
+  const gain = formatPlayerGain(player, modeId);
+  const cardClass = correct ? 'self-result-card' : 'self-result-card wrong';
+  if (els.chestPanel) {
+    els.chestPanel.classList.remove('hidden');
+    els.chestPanel.innerHTML = `
+      <div class="${cardClass}">
+        <div class="result-icon mode-result-icon">${resultArtForMode(correct, modeId, player)}</div>
+        <p class="eyebrow">${correct ? 'Reward resolved' : 'No reward'}</p>
+        <h2>${LQ.escapeHtml(gain.label || '')}</h2>
+        <p class="mode-event-line">${LQ.escapeHtml(formatRevealModeEvent(player, modeId))}</p>
+        <p class="result-explanation"><strong>Correct answer:</strong> ${LQ.escapeHtml(player.lastCorrectAnswer || '')}</p>
+        ${player.lastExplanation ? `<p class="result-explanation">${LQ.escapeHtml(player.lastExplanation)}</p>` : ''}
+      </div>
+    `;
+  }
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.remove('hidden');
+  LQ.setStatus(els.answerStatus, `${formatMainPlayerStat(player, modeId)} · ${formatPlayerModeStat(player, modeId)}`, correct ? 'ok' : '');
+}
+
+async function nextSelfPacedQuestion() {
+  if (!joinedPin || !liveGame) return;
+  const me = liveGame.players?.[uid] || {};
+  const nextIndex = Number(me.selfQuestionIndex || 0) + 1;
+  localChestQuestionKey = '';
+  localChestChoiceIndex = -1;
+  await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
+    selfQuestionIndex: nextIndex,
+    resultReady: false,
+    pendingRewardRequest: null,
+    lastModeLabel: '',
+    lastSeen: serverTimestamp()
+  });
 }
 
 function renderReveal(game) {
@@ -392,14 +672,14 @@ function renderEnded(game) {
 function formatMainPlayerStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
 function formatPlayerModeStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold in vault`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} / ${RACE_FINISH_DISTANCE} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.shield || 0)} shield · ${LQ.formatScore(player.damage || 0)} dmg`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power · ${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.shield || 0)} shield`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -438,6 +718,16 @@ function formatRevealModeEvent(player, modeId) {
   return 'Round complete.';
 }
 
+function resultArtForMode(correct, modeId, player) {
+  if (modeId !== 'coin-rush' || !correct) return resultIconForMode(correct, modeId, player);
+  const type = String(player.lastRewardType || '').toLowerCase();
+  let image = GOLD_RUSH_IMAGES.coins;
+  if (type === 'triple') image = GOLD_RUSH_IMAGES.gems;
+  if (type === 'trap') image = GOLD_RUSH_IMAGES.open;
+  if (type === 'steal' || type === 'raid') image = GOLD_RUSH_IMAGES.vault;
+  return assetImage(image, 'Chest reward', 'result-art-img');
+}
+
 function resultIconForMode(correct, modeId, player) {
   if (modeId === 'coin-rush') return correct ? '🧰' : '×';
   if (modeId === 'cadet-race') return correct ? '🏁' : '↺';
@@ -468,7 +758,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.power || 0) - Number(a.power || 0)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.power || 0) - Number(a.power || 0)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }
