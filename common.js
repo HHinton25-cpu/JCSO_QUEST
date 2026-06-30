@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-power-battle-light-v3';
+  const APP_VERSION = '20260630-power-battle-redesign-light-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',

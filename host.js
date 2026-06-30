@@ -32,43 +32,43 @@ const BATTLE_START_HEALTH = 5;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 5 };
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-light-v3',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-light-v3',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-light-v3',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-light-v3',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-light-v3',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-light-v3',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-light-v3',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-light-v3',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-light-v3',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-light-v3',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-light-v3',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-light-v3',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-light-v3',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-light-v3',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-light-v3',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-light-v3',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-light-v3',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-light-v3',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-light-v3',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-light-v3',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-light-v3',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-light-v3',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-light-v3',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-light-v3',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-light-v3',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-light-v3',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-light-v3',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-light-v3',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-light-v3',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-light-v3',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-light-v3',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-light-v3'
+  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-redesign-light-v1',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-redesign-light-v1',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-redesign-light-v1',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-redesign-light-v1',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-redesign-light-v1',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-redesign-light-v1',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-redesign-light-v1',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-redesign-light-v1',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-redesign-light-v1',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-redesign-light-v1',
+  health1: 'jcso-health-1-md.png?v=20260630-power-battle-redesign-light-v1',
+  health2: 'jcso-health-2-md.png?v=20260630-power-battle-redesign-light-v1',
+  health3: 'jcso-health-3-md.png?v=20260630-power-battle-redesign-light-v1',
+  health4: 'jcso-health-4-md.png?v=20260630-power-battle-redesign-light-v1',
+  health5: 'jcso-health-5-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-redesign-light-v1',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-redesign-light-v1',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-redesign-light-v1',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-redesign-light-v1',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-redesign-light-v1',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-redesign-light-v1',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-redesign-light-v1'
 };
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-light-v3',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-light-v3',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-light-v3'
+  track: 'jcso-race-track-md.png?v=20260630-power-battle-redesign-light-v1',
+  car: 'jcso-race-car-md.png?v=20260630-power-battle-redesign-light-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-redesign-light-v1'
 };
 let processingRewardRequests = new Set();
 let endingInProgress = false;
@@ -211,7 +211,7 @@ function renderModePreview() {
         ? ['Power Battle', 'Simultaneous matchups', '5 lives decide the winner']
         : ['Self-paced game', 'No question timer', 'Goal or time limit'];
     els.selectedModeCard.innerHTML = `
-      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-power-battle-light-v3" alt="" loading="lazy" decoding="async" />
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-power-battle-redesign-light-v1" alt="" loading="lazy" decoding="async" />
       <div>
         <p class="eyebrow">Selected mode</p>
         <h2>${LQ.escapeHtml(mode.name)}</h2>

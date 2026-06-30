@@ -27,3 +27,7 @@ Update note: This build restores answer-position randomization for every selecte
 
 
 Updated with the Power Battle UI pack, 5-life battle flow, simultaneous pairings, and reaction-time tracking.
+
+
+## Lightweight upload note
+This build keeps the Power Battle redesign but compresses the large artwork to WebP and removes unused duplicate assets so GitHub can process it more easily. Extract first, then upload the extracted files into the repo root.
