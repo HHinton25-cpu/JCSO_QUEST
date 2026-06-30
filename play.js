@@ -26,21 +26,27 @@ let localChestChoiceIndex = -1;
 let rewardSubmitInProgress = false;
 
 const RACE_FINISH_DISTANCE = 500;
-const BATTLE_START_HEALTH = 100;
-const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
+const BATTLE_START_HEALTH = 5;
+const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
+let lastSelfPacedRenderKey = '';
+const BATTLE_IMAGES = {
+  badge: 'jcso-battle-badge-md.png?v=20260630-battle-royale-v1',
+  shield: 'jcso-power-shield-md.png?v=20260630-battle-royale-v1',
+  attack: 'jcso-attack-effect-md.png?v=20260630-battle-royale-v1'
+};
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-race-assets-v1',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-race-assets-v1',
-  open: 'gold-rush-chest-open-md.png?v=20260630-race-assets-v1',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-race-assets-v1',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-race-assets-v1',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-race-assets-v1'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-battle-royale-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-battle-royale-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-battle-royale-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-battle-royale-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-battle-royale-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-battle-royale-v1'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-race-assets-v1',
-  car: 'jcso-race-car-md.png?v=20260630-race-assets-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-race-assets-v1'
+  track: 'jcso-race-track-md.png?v=20260630-battle-royale-v1',
+  car: 'jcso-race-car-md.png?v=20260630-battle-royale-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-royale-v1'
 };
 
 const els = {};
@@ -182,6 +188,7 @@ async function joinGame() {
     selfQuestionIndex: 0,
     resultReady: false,
     pendingRewardRequest: null,
+    targetPickRequest: null,
     online: true,
     joinedAt: serverTimestamp(),
     lastSeen: serverTimestamp()
@@ -266,7 +273,10 @@ function renderQuestion(game) {
   els.answeredScore.textContent = `${formatMainPlayerStat(me, mode.id)} · ${formatPlayerModeStat(me, mode.id)}`;
 
   if (!eligible) {
-    LQ.setStatus(els.answerStatus, 'You joined during this question. You will be able to answer the next one.', '');
+    const message = mode.id === 'power-battle'
+      ? 'You are out of this Battle Royale round. Watch the leaderboard for the winner.'
+      : 'You joined during this question. You will be able to answer the next one.';
+    LQ.setStatus(els.answerStatus, message, '');
     LQ.showScreen('answered');
     cleanupTimer();
     return;
@@ -287,7 +297,16 @@ function renderQuestion(game) {
   document.querySelectorAll('[data-choice-index]').forEach(button => {
     button.addEventListener('click', () => submitAnswer(Number(button.dataset.choiceIndex)));
   });
-  LQ.setStatus(els.answerStatus, 'Choose an answer before time runs out.');
+  if (mode.id === 'power-battle') {
+    const opponentUid = q.battlePairs?.[uid] || '';
+    const opponent = opponentUid ? game.players?.[opponentUid] : null;
+    const opponentName = opponent?.name || 'a bye round';
+    LQ.setStatus(els.answerStatus, opponentUid
+      ? `Battle Royale: you are matched against ${opponentName}. Fastest correct answer wins; wrong or no answer loses 1 life.`
+      : 'Battle Royale: bye round. Answer to stay sharp while the others battle.', '');
+  } else {
+    LQ.setStatus(els.answerStatus, 'Choose an answer before time runs out.');
+  }
   LQ.showScreen('question');
   startTimer(Number(state.endsAt || Date.now()));
 }
@@ -369,11 +388,28 @@ function renderSelfPacedPlay(game) {
   const q = questionBank[qIndex];
   const questionKey = `${qIndex}_${q.id || q.question}`;
   const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || (mode.id === 'coin-rush' ? 10000 : 500));
+  const renderKey = [
+    mode.id,
+    game.state?.phase || '',
+    qIndex,
+    me.pendingRewardRequest?.requestId || '',
+    me.targetPickRequest?.requestId || '',
+    me.resultReady ? 'result' : 'question',
+    me.coins || 0,
+    me.distance || 0,
+    me.lastModeLabel || '',
+    localChestQuestionKey,
+    localChestChoiceIndex
+  ].join('|');
+  const onlyOtherPlayersChanged = renderKey === lastSelfPacedRenderKey;
+  if (onlyOtherPlayersChanged) {
+    updateSelfPacedTopbar(me, mode, goal);
+    startSelfPacedClock(game);
+    return;
+  }
+  lastSelfPacedRenderKey = renderKey;
 
-  els.playerRound.innerHTML = `${LQ.modeLogoMarkup(mode, 'mode-logo-chip player-round-logo')} <span>Question ${Number(me.played || 0) + 1}</span>`;
-  els.playerScore.textContent = formatMainPlayerStat(me, mode.id);
-  if (els.playerMode) els.playerMode.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip player-mode-logo');
-  if (els.playerCoins) els.playerCoins.textContent = mode.id === 'coin-rush' ? `Vault ${LQ.formatScore(me.coins || 0)} gold • Goal ${LQ.formatScore(goal)}` : `${formatPlayerModeStat(me, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
+  updateSelfPacedTopbar(me, mode, goal);
   startSelfPacedClock(game);
   els.playerCategory.textContent = q.category || 'Category';
   els.playerQuestion.textContent = q.question || 'Pick your answer';
@@ -383,6 +419,12 @@ function renderSelfPacedPlay(game) {
 
   if (me.pendingRewardRequest) {
     renderOpeningReward(mode.id);
+    LQ.showScreen('question');
+    return;
+  }
+
+  if (me.targetPickRequest) {
+    renderGoldStealTargetPicker(game, me.targetPickRequest);
     LQ.showScreen('question');
     return;
   }
@@ -410,6 +452,17 @@ function renderSelfPacedPlay(game) {
   });
   LQ.setStatus(els.answerStatus, 'Answer correctly to unlock three mystery rewards. No question timer.', '');
   LQ.showScreen('question');
+}
+
+function updateSelfPacedTopbar(player, mode, goal) {
+  if (els.playerRound) els.playerRound.innerHTML = `${LQ.modeLogoMarkup(mode, 'mode-logo-chip player-round-logo')} <span>Question ${Number(player.played || 0) + 1}</span>`;
+  if (els.playerScore) els.playerScore.textContent = formatMainPlayerStat(player, mode.id);
+  if (els.playerMode) els.playerMode.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip player-mode-logo');
+  if (els.playerCoins) {
+    els.playerCoins.textContent = mode.id === 'coin-rush'
+      ? `Vault ${LQ.formatScore(player.coins || 0)} gold • Goal ${LQ.formatScore(goal)}`
+      : `${formatPlayerModeStat(player, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
+  }
 }
 
 function timeLeftLabel(game) {
@@ -444,7 +497,7 @@ function startSelfPacedClock(game) {
 function objectiveUnit(modeId) {
   if (modeId === 'coin-rush') return 'gold';
   if (modeId === 'cadet-race') return 'ft';
-  if (modeId === 'power-battle') return 'power';
+  if (modeId === 'power-battle') return 'lives';
   return 'points';
 }
 
@@ -559,7 +612,7 @@ function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-race-assets-v1`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-battle-royale-v1`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -574,6 +627,65 @@ function seededUnit(seed) {
 }
 
 
+function renderGoldStealTargetPicker(game, targetPickRequest) {
+  if (!els.chestPanel) return;
+  els.playerAnswers.innerHTML = '';
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  els.chestPanel.classList.remove('hidden');
+  const players = Object.entries(game.players || {})
+    .map(([playerUid, player]) => ({ uid: playerUid, ...player }))
+    .filter(player => player.uid !== uid && Number(player.coins || 0) > 0)
+    .sort((a, b) => (Number(b.coins || 0) - Number(a.coins || 0)) || String(a.name || '').localeCompare(String(b.name || '')));
+  const pct = Math.round(Number(targetPickRequest.percent || 0.25) * 100);
+  const targetCards = players.map((player, i) => `
+    <button type="button" class="steal-target-card ${i === 0 ? 'leader-target' : ''}" data-steal-target="${LQ.escapeAttr(player.uid)}">
+      <span class="rank-badge">#${i + 1}</span>
+      <span class="target-avatar">${LQ.avatarMarkup(player, 'avatar-img')}</span>
+      <strong>${LQ.escapeHtml(player.name || 'Player')}</strong>
+      <small>${LQ.formatScore(player.coins || 0)} gold</small>
+    </button>
+  `).join('');
+  els.chestPanel.innerHTML = `
+    <div class="chest-intro gold-rush-chest-intro steal-target-intro">
+      ${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}
+      ${assetImage(GOLD_RUSH_IMAGES.vault, 'Gold Rush vault', 'opening-chest-img')}
+      <h2>Steal chest unlocked</h2>
+      <p>Choose a player from the leaderboard. This chest can steal up to ${pct}% of that player’s gold.</p>
+    </div>
+    <div class="steal-target-grid">
+      ${targetCards || '<p class="muted">No one has gold to steal yet.</p>'}
+    </div>
+    ${!targetCards ? '<button type="button" class="primary-btn jumbo" data-steal-target="">Take consolation gold</button>' : ''}
+  `;
+  els.chestPanel.querySelectorAll('[data-steal-target]').forEach(button => {
+    button.addEventListener('click', () => chooseStealTarget(button.dataset.stealTarget || ''));
+  });
+  LQ.setStatus(els.answerStatus, 'Choose who to steal from.', 'ok');
+}
+
+async function chooseStealTarget(targetUid) {
+  if (!joinedPin || !liveGame || rewardSubmitInProgress) return;
+  const me = liveGame.players?.[uid] || {};
+  const targetPickRequest = me.targetPickRequest;
+  if (!targetPickRequest) return;
+  rewardSubmitInProgress = true;
+  try {
+    await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
+      pendingRewardRequest: {
+        ...targetPickRequest,
+        targetUid: targetUid || '',
+        targetSelectedAt: Date.now()
+      },
+      targetPickRequest: null,
+      resultReady: false,
+      lastModeLabel: targetUid ? 'Stealing selected gold…' : 'Resolving chest…',
+      lastSeen: serverTimestamp()
+    });
+  } finally {
+    rewardSubmitInProgress = false;
+  }
+}
+
 async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
   if (!joinedPin || !liveGame || rewardSubmitInProgress) return;
   rewardSubmitInProgress = true;
@@ -584,7 +696,7 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
     const modeId = liveGame.settings?.gameMode || 'coin-rush';
     const openingClass = modeId === 'cadet-race' ? 'race-opening' : modeId === 'coin-rush' ? 'gold-rush-opening' : '';
     const openingLogo = modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : '';
-    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : '<div class="loader small-loader"></div>';
+    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : modeId === 'coin-rush' ? assetImage(GOLD_RUSH_IMAGES.open, 'Gold Rush chest', 'opening-chest-img') : '<div class="loader small-loader"></div>';
     const openingText = modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Gold Rush is resolving your reward.';
     els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${openingClass}">${openingLogo}${openingArt}<h2>Opening reward…</h2><p>${openingText}</p></div>`;
   }
@@ -656,6 +768,7 @@ async function nextSelfPacedQuestion() {
     selfQuestionIndex: nextIndex,
     resultReady: false,
     pendingRewardRequest: null,
+    targetPickRequest: null,
     lastModeLabel: '',
     lastSeen: serverTimestamp()
   });
@@ -673,7 +786,11 @@ function renderReveal(game) {
   const gainInfo = formatPlayerGain(me, mode.id);
 
   els.playerResultCard.classList.toggle('wrong', !correct && Number(me.lastGain || 0) <= 0);
-  els.playerResultIcon.textContent = resultIconForMode(correct, mode.id, me);
+  if (mode.id === 'power-battle') {
+    els.playerResultIcon.innerHTML = resultArtForMode(correct, mode.id, me);
+  } else {
+    els.playerResultIcon.textContent = resultIconForMode(correct, mode.id, me);
+  }
   els.playerResultLabel.textContent = resultLabelForMode(correct, mode.id, me);
   els.playerCorrectAnswer.textContent = `Correct answer: ${reveal.correctAnswer || ''}`;
   if (els.playerModeEvent) els.playerModeEvent.textContent = formatRevealModeEvent(me, mode.id);
@@ -735,14 +852,14 @@ function renderEnded(game) {
 function formatMainPlayerStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
 function formatPlayerModeStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold in vault`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} / ${RACE_FINISH_DISTANCE} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power · ${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(player.shield || 0)} shield`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(player.damage || 0)} wins`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -756,15 +873,11 @@ function formatPlayerGain(player, modeId) {
     return { value: delta, suffix: ' ft', label: `${formatSigned(delta)} ft` };
   }
   if (modeId === 'power-battle') {
-    const damage = Number(player.lastDamage || 0);
-    const shield = Number(player.lastShield || 0);
     const hp = Number(player.lastHealthChange || 0);
-    const power = Number(player.lastPower || 0);
-    if (damage > 0) return { value: damage, suffix: ' dmg', label: `+${LQ.formatScore(damage)} dmg` };
-    if (shield > 0) return { value: shield, suffix: ' shield', label: `+${LQ.formatScore(shield)} shield` };
-    if (power > 0) return { value: power, suffix: ' power', label: `+${LQ.formatScore(power)} power` };
-    if (hp < 0) return { value: hp, suffix: ' HP', label: `${formatSigned(hp)} HP` };
-    return { value: Number(player.lastGain || 0), suffix: ' battle', label: `${formatSigned(player.lastGain || 0)} battle` };
+    const wins = Number(player.lastDamage || 0);
+    if (wins > 0) return { value: wins, suffix: ' win', label: `Won matchup` };
+    if (hp < 0) return { value: hp, suffix: ' life', label: `${formatSigned(hp)} life` };
+    return { value: Number(player.lastGain || 0), suffix: ' lives', label: `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives` };
   }
   const pts = Number(player.lastGain || 0);
   return { value: pts, suffix: ' pts', label: `${formatSigned(pts)} pts` };
@@ -777,7 +890,7 @@ function formatRevealModeEvent(player, modeId) {
   if (player.lastModeLabel) return player.lastModeLabel;
   if (modeId === 'coin-rush') return player.lastCorrect ? `Chest result: ${formatSigned(player.lastCoins || 0)} gold` : 'No chest — answer correctly to open one.';
   if (modeId === 'cadet-race') return player.lastCorrect ? `Track move: ${formatSigned(player.lastDistance || 0)} ft` : 'No move this round.';
-  if (modeId === 'power-battle') return player.lastCorrect ? 'Battle action triggered.' : 'No battle reward this round.';
+  if (modeId === 'power-battle') return player.lastModeLabel || 'Battle Royale round complete.';
   return 'Round complete.';
 }
 
@@ -799,6 +912,10 @@ function resultArtForMode(correct, modeId, player) {
     if (type === 'sprint' || type === 'boost' || type === 'shortcut') image = RACE_IMAGES.car;
     return assetImage(image, 'Cadet Race result', 'result-art-img race-result-art');
   }
+  if (modeId === 'power-battle') {
+    const image = Number(player.lastHealthChange || 0) < 0 ? BATTLE_IMAGES.attack : BATTLE_IMAGES.badge;
+    return assetImage(image, 'Power Battle result', 'result-art-img battle-result-art');
+  }
   return resultIconForMode(correct, modeId, player);
 }
 
@@ -816,8 +933,9 @@ function resultLabelForMode(correct, modeId, player) {
   if (modeId === 'coin-rush') return correct ? 'Gold Rush chest opened!' : 'No chest this round';
   if (modeId === 'cadet-race') return correct ? 'Patrol moved!' : 'Wrong turn';
   if (modeId === 'power-battle') {
-    if (Number(player.lastHealthChange || 0) < 0) return 'You took damage';
-    return correct ? 'Battle action!' : 'No battle action';
+    if (Number(player.lastHealthChange || 0) < 0) return 'Life lost';
+    if (Number(player.lastDamage || 0) > 0) return 'Matchup won';
+    return 'Battle round';
   }
   return correct ? 'Correct!' : 'Not this time';
 }
@@ -832,7 +950,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.power || 0) - Number(a.power || 0)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }

@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-race-assets-v1';
+  const APP_VERSION = '20260630-battle-royale-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',
@@ -155,9 +155,9 @@
       image: 'jcso-mode-power-battle-md.png',
       name: 'Power Battle',
       shortName: 'Battle',
-      description: 'Self-paced questions unlock three tactical crates. Pick one to attack, shield, heal, surge, or steal power.',
-      scoring: 'The leaderboard is based on battle power. The game ends at the host’s power goal or time limit.',
-      objective: 'Answer at your own pace, build power, and outplay the room.'
+      description: 'Battle Royale pairs players each round. The faster correct answer wins the matchup; wrong or missed answers lose a life.',
+      scoring: 'The leaderboard is based on remaining lives, then matchup wins. The last player standing wins.',
+      objective: 'Stay alive, answer correctly, and win your head-to-head matchups.'
     }
   ];
 

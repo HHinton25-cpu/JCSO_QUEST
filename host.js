@@ -28,13 +28,18 @@ let lastRevealAnimationKey = '';
 let lastEndedAudioKey = '';
 
 const RACE_FINISH_DISTANCE = 500;
-const BATTLE_START_HEALTH = 100;
-const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
-const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 500 };
+const BATTLE_START_HEALTH = 5;
+const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
+const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 5 };
+const BATTLE_IMAGES = {
+  badge: 'jcso-battle-badge-md.png?v=20260630-battle-royale-v1',
+  shield: 'jcso-power-shield-md.png?v=20260630-battle-royale-v1',
+  attack: 'jcso-attack-effect-md.png?v=20260630-battle-royale-v1'
+};
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-race-assets-v1',
-  car: 'jcso-race-car-md.png?v=20260630-race-assets-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-race-assets-v1'
+  track: 'jcso-race-track-md.png?v=20260630-battle-royale-v1',
+  car: 'jcso-race-car-md.png?v=20260630-battle-royale-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-royale-v1'
 };
 let processingRewardRequests = new Set();
 let endingInProgress = false;
@@ -173,9 +178,11 @@ function renderModePreview() {
   if (els.selectedModeCard) {
     const labels = mode.id === 'classic'
       ? ['Host-paced quiz', 'Timed questions', 'Speed points']
-      : ['Self-paced game', 'No question timer', 'Goal or time limit'];
+      : mode.id === 'power-battle'
+        ? ['Battle Royale', 'Random matchups', 'Lives decide the winner']
+        : ['Self-paced game', 'No question timer', 'Goal or time limit'];
     els.selectedModeCard.innerHTML = `
-      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-blendfix-v5" alt="" loading="lazy" decoding="async" />
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-battle-royale-v1" alt="" loading="lazy" decoding="async" />
       <div>
         <p class="eyebrow">Selected mode</p>
         <h2>${LQ.escapeHtml(mode.name)}</h2>
@@ -190,24 +197,31 @@ function renderModePreview() {
 function renderGameModeOptions() {
   const modeId = els.gameModeSelect?.value || selectedModeId || 'classic';
   const selfPaced = isSelfPacedMode(modeId);
+  const battleMode = modeId === 'power-battle';
   if (els.classicTimerWrap) els.classicTimerWrap.classList.toggle('hidden', selfPaced);
-  if (els.selfPacedOptions) els.selfPacedOptions.classList.toggle('hidden', !selfPaced);
+  if (els.selfPacedOptions) els.selfPacedOptions.classList.toggle('hidden', !(selfPaced || battleMode));
   if (els.questionCountLabel) els.questionCountLabel.textContent = selfPaced ? 'Question pool' : 'Questions';
+  const timeWrap = els.gameTimeLimit?.closest?.('.setup-control-group');
+  if (timeWrap) timeWrap.classList.toggle('hidden', battleMode || modeId === 'classic');
+  const hint = els.selfPacedOptions?.querySelector?.('.small.muted');
+  if (hint) hint.textContent = battleMode
+    ? 'Battle Royale uses host-paced rounds. Each player is paired with another player each question; faster correct answers win the matchup.'
+    : 'Self-paced modes end when the goal is reached or the game clock expires.';
   if (!els.goalLimitLabel || !els.goalLimit) return;
   const labels = {
     'coin-rush': 'Gold goal',
     'cadet-race': 'Distance goal',
-    'power-battle': 'Power goal'
+    'power-battle': 'Starting lives'
   };
   const options = {
-    'coin-rush': [2000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000],
+    'coin-rush': [2000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000, 25000000, 50000000, 100000000],
     'cadet-race': [250, 500, 750, 1000, 1500, 2500, 5000],
-    'power-battle': [250, 500, 750, 1000, 1500, 2000]
+    'power-battle': [3, 5, 7, 10, 15]
   };
   els.goalLimitLabel.textContent = labels[modeId] || 'Goal limit';
   const values = options[modeId] || options['coin-rush'];
   const previous = Number(els.goalLimit.value || DEFAULT_GOAL_LIMITS[modeId] || values[1]);
-  els.goalLimit.innerHTML = values.map(value => `<option value="${value}">${LQ.formatScore(value)}</option>`).join('');
+  els.goalLimit.innerHTML = values.map(value => `<option value="${value}">${LQ.formatScore(value)}${battleMode ? ' lives' : ''}</option>`).join('');
   const chosen = values.includes(previous) ? previous : (DEFAULT_GOAL_LIMITS[modeId] || values[1]);
   els.goalLimit.value = String(chosen);
 }
@@ -437,6 +451,7 @@ async function startSelfPacedGame() {
     updates[`players/${playerUid}/selfQuestionIndex`] = 0;
     updates[`players/${playerUid}/resultReady`] = false;
     updates[`players/${playerUid}/pendingRewardRequest`] = null;
+    updates[`players/${playerUid}/targetPickRequest`] = null;
   });
 
   await update(ref(db, `${GAME_ROOT}/${gamePin}`), updates);
@@ -488,21 +503,21 @@ function liveHeadline(modeId, leader, goal) {
   const name = leader.name || 'Leader';
   if (modeId === 'coin-rush') return `${name} leads with ${LQ.formatScore(leader.coins || 0)} gold. Goal: ${LQ.formatScore(goal)}.`;
   if (modeId === 'cadet-race') return `${name} leads at ${LQ.formatScore(leader.distance || 0)} ft. Finish: ${LQ.formatScore(goal)} ft.`;
-  if (modeId === 'power-battle') return `${name} leads with ${LQ.formatScore(leader.power || 0)} power. Goal: ${LQ.formatScore(goal)}.`;
+  if (modeId === 'power-battle') return `${name} leads with ${LQ.formatScore(leader.health ?? goal)} lives. Starting lives: ${LQ.formatScore(goal)}.`;
   return `${name} is leading.`;
 }
 
 function objectiveLabel(modeId) {
   if (modeId === 'coin-rush') return 'Gold goal';
   if (modeId === 'cadet-race') return 'Distance goal';
-  if (modeId === 'power-battle') return 'Power goal';
+  if (modeId === 'power-battle') return 'Starting lives';
   return 'Goal';
 }
 
 function objectiveUnit(modeId) {
   if (modeId === 'coin-rush') return 'gold';
   if (modeId === 'cadet-race') return 'ft';
-  if (modeId === 'power-battle') return 'power';
+  if (modeId === 'power-battle') return 'lives';
   return 'points';
 }
 
@@ -578,8 +593,31 @@ function resolveSelfPacedReward(game, playerUid, request, questionBank, modeId) 
   const question = questionBank[qIndex] || {};
   const correct = Number(request.choiceIndex) === Number(question.answer || 0);
   const nextStreak = correct ? Number(player.streak || 0) + 1 : 0;
+
+  if (correct && modeId === 'coin-rush' && !request.targetUid && isGoldRushStealEvent(game, playerUid, request) && goldStealTargets(playerUid, players).length) {
+    const percent = goldRushStealPercent(request, playerUid);
+    return {
+      [`players/${playerUid}/pendingRewardRequest`]: null,
+      [`players/${playerUid}/targetPickRequest`]: {
+        requestId: request.requestId,
+        modeId,
+        questionIndex: qIndex,
+        choiceIndex: Number(request.choiceIndex ?? -1),
+        chestIndex: Number(request.chestIndex || 0),
+        percent,
+        createdAt: Date.now()
+      },
+      [`players/${playerUid}/resultReady`]: false,
+      [`players/${playerUid}/lastCorrect`]: true,
+      [`players/${playerUid}/lastModeLabel`]: 'Steal chest found! Choose whose gold to steal from the leaderboard.',
+      [`players/${playerUid}/lastCorrectAnswer`]: (question.choices || [])[Number(question.answer || 0)] || '',
+      [`players/${playerUid}/lastExplanation`]: question.explanation || ''
+    };
+  }
+
   const updates = {
     [`players/${playerUid}/pendingRewardRequest`]: null,
+    [`players/${playerUid}/targetPickRequest`]: null,
     [`players/${playerUid}/resultReady`]: true,
     [`players/${playerUid}/answered`] : Number(player.answered || 0) + 1,
     [`players/${playerUid}/played`] : Number(player.played || 0) + 1,
@@ -620,90 +658,69 @@ function calculateSelfPacedReward(modeId, game, playerUid, request, streak) {
 function calculateCoinChestReward(game, playerUid, request, streak) {
   const players = game.players || {};
   const player = players[playerUid] || {};
-  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-gold-rush`;
+  const seed = goldRushSeed(request, playerUid);
   const roll = seededNumber(seed);
-  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS['coin-rush'] || 10000);
-  const baseFloor = Math.max(100, Math.round(goal * 0.025));
-  const baseSpread = Math.max(150, Math.round(goal * 0.035));
-  const streakBonus = Math.round(Math.min(Number(streak || 0), 10) * Math.max(20, goal * 0.002));
-  const base = Math.round(baseFloor + seededNumber(`${seed}-base`) * baseSpread + streakBonus);
   const currentCoins = Number(player.coins || 0);
   const updates = {};
+  const normal = 25 + Math.floor(seededNumber(`${seed}-base`) * 76); // 25–100 max unless doubled, tripled, or stolen.
   let delta = 0;
   let label = '';
   let type = 'gold';
   let percent = 0;
 
-  if (roll < 0.22) {
-    delta = base;
+  if (roll < 0.30) {
+    delta = normal;
     label = `Gold chest: +${delta} gold`;
     type = 'gold';
-  } else if (roll < 0.35) {
-    delta = Math.round(base * 2);
-    label = `Large gold chest: +${delta} gold`;
-    type = 'big-gold';
-  } else if (roll < 0.50) {
-    delta = Math.round(base * 3);
+  } else if (roll < 0.45) {
+    delta = normal * 2;
+    label = `Double gold chest: +${delta} gold`;
+    type = 'double';
+  } else if (roll < 0.60) {
+    delta = normal * 3;
     label = `Triple gold chest: +${delta} gold`;
     type = 'triple';
-  } else if (roll < 0.66) {
-    percent = 0.25 + seededNumber(`${seed}-loss-percent`) * 0.25;
+  } else if (roll < 0.75) {
+    percent = 0.20 + seededNumber(`${seed}-loss-percent`) * 0.30;
     const pctText = Math.round(percent * 100);
     if (currentCoins > 0) {
-      delta = -Math.min(currentCoins, Math.max(50, Math.round(currentCoins * percent)));
+      delta = -Math.min(currentCoins, Math.max(1, Math.round(currentCoins * percent)));
       label = `Trap chest: lost ${pctText}% of your gold (${Math.abs(delta)} gold)`;
     } else {
       delta = 0;
       label = `Trap chest: lost ${pctText}% — but your vault was empty`;
     }
     type = 'loss-percent';
-  } else if (roll < 0.83) {
-    const targetUid = pickRichTarget(playerUid, players, `${seed}-steal`);
-    percent = 0.25 + seededNumber(`${seed}-steal-percent`) * 0.25;
-    const pctText = Math.round(percent * 100);
-    if (targetUid) {
-      const target = players[targetUid] || {};
-      const targetCurrent = Number(target.coins || 0);
-      const stolen = Math.min(targetCurrent, Math.max(75, Math.round(targetCurrent * percent)));
-      delta = stolen;
-      const targetCoins = Math.max(0, targetCurrent - stolen);
+  } else {
+    const targetUid = request.targetUid && players[request.targetUid] && request.targetUid !== playerUid
+      ? request.targetUid
+      : pickRichTarget(playerUid, players, `${seed}-steal`);
+    const target = targetUid ? players[targetUid] || {} : null;
+    const targetCurrent = Number(target?.coins || 0);
+    if (targetUid && targetCurrent > 0) {
+      if (roll < 0.88) {
+        delta = Math.min(targetCurrent, 75 + Math.floor(seededNumber(`${seed}-flat-steal`) * 176));
+        label = `Steal chest: took ${delta} gold from ${target.name || 'another player'}`;
+        type = 'steal-flat';
+      } else {
+        percent = goldRushStealPercent(request, playerUid);
+        const pctText = Math.round(percent * 100);
+        delta = Math.min(targetCurrent, Math.max(1, Math.round(targetCurrent * percent)));
+        label = `Steal chest: stole ${pctText}% from ${target.name || 'another player'} (${delta} gold)`;
+        type = 'steal-percent';
+      }
+      const targetCoins = Math.max(0, targetCurrent - delta);
       updates[`players/${targetUid}/coins`] = targetCoins;
       updates[`players/${targetUid}/score`] = targetCoins;
-      updates[`players/${targetUid}/lastCoins`] = -stolen;
-      updates[`players/${targetUid}/lastGain`] = -stolen;
-      updates[`players/${targetUid}/lastRewardType`] = 'stolen-percent';
-      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} stole ${pctText}% of your gold (${stolen} gold).`;
-      label = `Steal chest: stole ${pctText}% from ${target.name || 'another player'} (${stolen} gold)`;
-      type = 'steal-percent';
+      updates[`players/${targetUid}/lastCoins`] = -delta;
+      updates[`players/${targetUid}/lastGain`] = -delta;
+      updates[`players/${targetUid}/lastRewardType`] = type === 'steal-percent' ? 'stolen-percent' : 'stolen-flat';
+      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} stole ${type === 'steal-percent' ? `${Math.round(percent * 100)}% of your gold` : `${delta} gold`} from you.`;
     } else {
-      delta = Math.round(base * 1.5);
+      delta = normal;
       label = `Steal chest: no opponent had gold, so you banked +${delta} gold`;
       type = 'steal-empty';
     }
-  } else if (roll < 0.96) {
-    percent = 0.10 + seededNumber(`${seed}-raid-percent`) * 0.12;
-    const pctText = Math.round(percent * 100);
-    let total = 0;
-    Object.entries(players).forEach(([otherUid, other]) => {
-      if (otherUid === playerUid || Number(other.coins || 0) <= 0) return;
-      const otherCurrent = Number(other.coins || 0);
-      const taken = Math.min(otherCurrent, Math.max(35, Math.round(otherCurrent * percent)));
-      total += taken;
-      const nextCoins = Math.max(0, otherCurrent - taken);
-      updates[`players/${otherUid}/coins`] = nextCoins;
-      updates[`players/${otherUid}/score`] = nextCoins;
-      updates[`players/${otherUid}/lastCoins`] = -taken;
-      updates[`players/${otherUid}/lastGain`] = -taken;
-      updates[`players/${otherUid}/lastRewardType`] = 'raid-loss';
-      updates[`players/${otherUid}/lastModeLabel`] = `${player.name || 'A player'} raided ${pctText}% of your gold (${taken} gold).`;
-    });
-    delta = total || Math.round(base * 2);
-    label = total ? `Vault raid: took ${pctText}% from each opponent (${total} gold)` : `Vault raid: no opponent had gold, bonus +${delta} gold`;
-    type = 'raid-percent';
-  } else {
-    delta = Math.max(Math.round(base * 5), Math.round(goal * 0.10));
-    label = `Jackpot vault: +${delta} gold`;
-    type = 'jackpot';
   }
 
   const nextCoins = Math.max(0, Math.round(currentCoins + delta));
@@ -712,6 +729,26 @@ function calculateCoinChestReward(game, playerUid, request, streak) {
   updates[`players/${playerUid}/lastCoins`] = Math.round(delta);
   updates[`players/${playerUid}/lastRewardPercent`] = percent ? Math.round(percent * 100) : 0;
   return { updates, label, lastGain: Math.round(delta), type };
+}
+
+function goldRushSeed(request, playerUid) {
+  return `${request.requestId}-${playerUid}-${request.chestIndex}-gold-rush`;
+}
+
+function isGoldRushStealEvent(game, playerUid, request) {
+  const roll = seededNumber(goldRushSeed(request, playerUid));
+  return roll >= 0.75;
+}
+
+function goldRushStealPercent(request, playerUid) {
+  const seed = goldRushSeed(request, playerUid);
+  return 0.20 + seededNumber(`${seed}-steal-percent`) * 0.30;
+}
+
+function goldStealTargets(uid, players) {
+  return Object.entries(players || {})
+    .filter(([otherUid, p]) => otherUid !== uid && Number(p.coins || 0) > 0)
+    .sort((a, b) => (Number(b[1].coins || 0) - Number(a[1].coins || 0)) || String(a[1].name || '').localeCompare(String(b[1].name || '')));
 }
 
 function calculateRaceCardReward(game, playerUid, request, streak) {
@@ -873,7 +910,7 @@ function shouldEndSelfPaced(game) {
 function playerStatForGoal(player, modeId) {
   if (modeId === 'coin-rush') return player.coins || 0;
   if (modeId === 'cadet-race') return player.distance || 0;
-  if (modeId === 'power-battle') return player.power || 0;
+  if (modeId === 'power-battle') return player.health ?? BATTLE_START_HEALTH;
   return player.score || 0;
 }
 
@@ -907,10 +944,18 @@ async function nextQuestion() {
     const now = Date.now();
     const timerSeconds = Number(liveGame?.settings?.timerSeconds || 30);
     const playersAtStart = liveGame?.players || {};
-    const eligiblePlayerUids = Object.keys(playersAtStart).filter(playerUid => playersAtStart[playerUid] && playersAtStart[playerUid].name);
+    const mode = LQ.getGameMode(liveGame?.settings?.gameMode || 'classic');
+    const eligiblePlayerUids = Object.keys(playersAtStart).filter(playerUid => playersAtStart[playerUid] && playersAtStart[playerUid].name && (mode.id !== 'power-battle' || nextIndex === 0 || Number(playersAtStart[playerUid].health || 0) > 0));
     const eligiblePlayers = Object.fromEntries(eligiblePlayerUids.map(playerUid => [playerUid, true]));
     const eligiblePlayerNames = Object.fromEntries(eligiblePlayerUids.map(playerUid => [playerUid, String(playersAtStart[playerUid]?.name || 'Player')]));
-    const mode = LQ.getGameMode(liveGame?.settings?.gameMode || 'classic');
+    if (mode.id === 'power-battle' && nextIndex > 0) {
+      const aliveUids = Object.keys(playersAtStart).filter(playerUid => playersAtStart[playerUid]?.name && Number(playersAtStart[playerUid]?.health || 0) > 0);
+      if (aliveUids.length <= 1) {
+        await endGame();
+        return;
+      }
+    }
+    const battlePairMap = mode.id === 'power-battle' ? buildBattlePairs(playersAtStart, nextIndex) : null;
     activeQuestion = {
       localIndex: nextIndex,
       question: q,
@@ -932,7 +977,8 @@ async function nextQuestion() {
         choices: choices.map(item => item.choice),
         eligiblePlayers,
         eligiblePlayerNames,
-        eligibleCount: eligiblePlayerUids.length
+        eligibleCount: eligiblePlayerUids.length,
+        battlePairs: battlePairMap || null
       },
       state: {
         phase: 'question',
@@ -954,7 +1000,7 @@ async function nextQuestion() {
         gameUpdate[`players/${playerUid}/power`] = 0;
         gameUpdate[`players/${playerUid}/damage`] = 0;
         gameUpdate[`players/${playerUid}/shield`] = 0;
-        gameUpdate[`players/${playerUid}/health`] = BATTLE_START_HEALTH;
+        gameUpdate[`players/${playerUid}/health`] = mode.id === 'power-battle' ? Number(liveGame?.settings?.goalLimit || BATTLE_START_HEALTH) : BATTLE_START_HEALTH;
         gameUpdate[`players/${playerUid}/correct`] = 0;
         gameUpdate[`players/${playerUid}/answered`] = 0;
         gameUpdate[`players/${playerUid}/played`] = 0;
@@ -1250,14 +1296,14 @@ function renderLeaderboard(container, playersObj, options = {}) {
 function formatLeaderboardScore(p, modeId, value = Number(p.score || 0)) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(value)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(value)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(value)} power`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(value)} lives`;
   return `${LQ.formatScore(value)} pts`;
 }
 
 function scoreSuffix(modeId) {
   if (modeId === 'coin-rush') return ' gold';
   if (modeId === 'cadet-race') return ' ft';
-  if (modeId === 'power-battle') return ' power';
+  if (modeId === 'power-battle') return ' lives';
   return ' pts';
 }
 
@@ -1270,7 +1316,7 @@ function formatLeaderboardDetail(p, modeId) {
     return `${base} · ${LQ.formatScore(p.distance || 0)} / ${RACE_FINISH_DISTANCE} ft${Number(p.lastDistance || 0) ? ` · ${formatSigned(p.lastDistance)} ft` : ''}`;
   }
   if (modeId === 'power-battle') {
-    return `${base} · ${LQ.formatScore(p.power || 0)} power · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} HP · ${LQ.formatScore(p.shield || 0)} shield`;
+    return `${base} · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(p.damage || 0)} wins`;
   }
   return `${base}${Number(p.lastGain || 0) ? ` · ${formatSigned(p.lastGain)} pts` : ''}`;
 }
@@ -1305,13 +1351,16 @@ function renderModeStatus(game) {
   }
 
   if (mode.id === 'power-battle') {
+    const startingLives = Number(game.settings?.goalLimit || BATTLE_START_HEALTH);
+    const pairs = game.question?.battlePairs || {};
     els.modeStatusPanel.innerHTML = `
-      <div class="mode-objective"><strong>${mode.icon} Power Battle</strong><span>Correct answers attack, shield, or surge. Wrong answers can cost health.</span></div>
-      <div class="battle-board">
+      <div class="mode-objective battle-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Battle Royale: each player is paired with a random opponent. Faster correct answer wins; wrong or no answer loses 1 life.</span></div>
+      <div class="battle-board battle-royale-board">
         ${players.map(p => {
-          const health = LQ.clamp(Number(p.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
-          const shield = LQ.clamp(Number(p.shield || 0), 0, 60);
-          return `<div class="battle-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${health}%"></i><b style="width:${shield}%"></b></div><small>${LQ.formatScore(health)} HP · ${LQ.formatScore(p.damage || 0)} dmg</small></div>`;
+          const health = LQ.clamp(Number(p.health ?? startingLives), 0, startingLives);
+          const percent = (health / Math.max(1, startingLives)) * 100;
+          const opponentName = pairs[p.uid] && game.players?.[pairs[p.uid]] ? game.players[pairs[p.uid]].name : 'Bye';
+          return `<div class="battle-row battle-royale-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${percent}%"></i></div><small>${LQ.formatScore(health)} lives · vs ${LQ.escapeHtml(opponentName || 'Bye')} · ${LQ.formatScore(p.damage || 0)} wins</small></div>`;
         }).join('') || '<span class="muted">No battlers yet.</span>'}
       </div>
     `;
@@ -1332,7 +1381,7 @@ function renderModeStatus(game) {
 function formatModeStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.power || 0)} power`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -1562,105 +1611,117 @@ function calculateRaceOutcomes(roundResults, players, questionIndex) {
 function calculateBattleOutcomes(roundResults, players, questionIndex) {
   const outcomes = baseOutcomes(roundResults, players, 'power-battle');
   const events = [];
+  const startingLives = Number(liveGame?.settings?.goalLimit || BATTLE_START_HEALTH);
   Object.keys(outcomes).forEach(uid => {
-    outcomes[uid].health = LQ.clamp(Number(players[uid]?.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
-    outcomes[uid].shield = LQ.clamp(Number(players[uid]?.shield || 0), 0, 60);
+    outcomes[uid].health = LQ.clamp(Number(players[uid]?.health ?? startingLives), 0, startingLives);
+    outcomes[uid].shield = 0;
+    outcomes[uid].power = 0;
     outcomes[uid].damage = Number(players[uid]?.damage || 0);
-    outcomes[uid].power = Number(players[uid]?.power || 0);
+    outcomes[uid].score = outcomes[uid].health;
+    outcomes[uid].label = 'Waiting for matchup result.';
   });
 
-  Object.entries(roundResults).forEach(([uid, result]) => {
-    const player = result.player || {};
-    if (!result.correct) {
-      if (result.answered) {
-        const penalty = Math.min(8, outcomes[uid].health);
-        outcomes[uid].health -= penalty;
-        outcomes[uid].lastHealthChange -= penalty;
-        outcomes[uid].label = penalty ? `Missed shot: -${penalty} HP` : 'Already knocked down — no HP lost.';
-        events.push(eventFor(uid, player, outcomes[uid].label, -penalty, 'battle-miss'));
-      } else {
-        outcomes[uid].label = 'No battle action this round.';
-      }
+  const pairMap = liveGame?.question?.battlePairs || buildBattlePairs(players, questionIndex);
+  const handled = new Set();
+
+  Object.keys(outcomes).forEach(uid => {
+    if (handled.has(uid)) return;
+    handled.add(uid);
+    const opponentUid = pairMap[uid] || '';
+    const result = roundResults[uid];
+    const player = result?.player || players[uid] || {};
+
+    if (!opponentUid || !outcomes[opponentUid]) {
+      outcomes[uid].label = 'Bye round: no opponent this question. No life lost.';
+      events.push(eventFor(uid, player, outcomes[uid].label, 0, 'battle-bye'));
       return;
     }
 
-    const roll = seededNumber(`${uid}-${questionIndex}-battle-event`);
-    const attack = Math.round(16 + result.speedRatio * 18 + Math.min(result.nextStreak * 4, 24));
-    let label = '';
-    let type = 'attack';
+    handled.add(opponentUid);
+    const opponentResult = roundResults[opponentUid] || { uid: opponentUid, player: players[opponentUid] || {}, answered: false, correct: false, elapsed: Number.POSITIVE_INFINITY };
+    const opponent = opponentResult.player || players[opponentUid] || {};
+    const aCorrect = Boolean(result?.correct);
+    const bCorrect = Boolean(opponentResult?.correct);
+    const aAnswered = Boolean(result?.answered);
+    const bAnswered = Boolean(opponentResult?.answered);
+    let winnerUid = '';
+    let loserUid = '';
+    let reason = '';
 
-    if (roll < 0.52) {
-      const targetUid = pickBattleTarget(uid, outcomes, players, `${uid}-${questionIndex}-attack`);
-      const dealt = applyDamage(outcomes, targetUid, attack);
-      outcomes[uid].damage += dealt;
-      outcomes[uid].power += Math.round(attack * 0.25);
-      outcomes[uid].lastDamage += dealt;
-      outcomes[uid].lastPower += Math.round(attack * 0.25);
-      label = targetUid ? `Attack hit ${players[targetUid]?.name || 'opponent'} for ${dealt} damage` : `Training strike scored ${attack} power`;
-      type = 'attack';
-      if (targetUid) {
-        outcomes[targetUid].label = `${player.name || 'Opponent'} hit you for ${dealt} damage`;
-        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
+    if (aCorrect && bCorrect) {
+      const aElapsed = Number(result.elapsed || 0);
+      const bElapsed = Number(opponentResult.elapsed || 0);
+      if (aElapsed === bElapsed) {
+        winnerUid = seededNumber(`${questionIndex}-${uid}-${opponentUid}-tie`) < 0.5 ? uid : opponentUid;
+      } else {
+        winnerUid = aElapsed < bElapsed ? uid : opponentUid;
       }
-    } else if (roll < 0.70) {
-      const shieldGain = Math.round(attack * 0.75);
-      const before = outcomes[uid].shield;
-      outcomes[uid].shield = LQ.clamp(outcomes[uid].shield + shieldGain, 0, 60);
-      outcomes[uid].lastShield += outcomes[uid].shield - before;
-      outcomes[uid].power += Math.round(attack * 0.3);
-      outcomes[uid].lastPower += Math.round(attack * 0.3);
-      label = `Raised a shield: +${outcomes[uid].lastShield} shield`;
-      type = 'shield';
-    } else if (roll < 0.86) {
-      const targets = pickMultipleTargets(uid, outcomes, players, `${uid}-${questionIndex}-double`, 2);
-      let totalDealt = 0;
-      targets.forEach(targetUid => {
-        const dealt = applyDamage(outcomes, targetUid, Math.round(attack * 0.70));
-        totalDealt += dealt;
-        outcomes[targetUid].label = `${player.name || 'Opponent'} double-struck you for ${dealt} damage`;
-        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
-      });
-      outcomes[uid].damage += totalDealt;
-      outcomes[uid].lastDamage += totalDealt;
-      outcomes[uid].power += Math.round(attack * 0.25);
-      outcomes[uid].lastPower += Math.round(attack * 0.25);
-      label = targets.length ? `Double strike dealt ${totalDealt} total damage` : `Double strike charged ${attack} power`;
-      type = 'double';
-    } else if (roll < 0.96) {
-      const surge = attack + 12;
-      outcomes[uid].power += surge;
-      outcomes[uid].lastPower += surge;
-      label = `Power surge: +${surge} power`;
-      type = 'surge';
+      loserUid = winnerUid === uid ? opponentUid : uid;
+      const speedText = Math.abs(Math.round((aElapsed - bElapsed) / 1000 * 10) / 10);
+      reason = `fastest correct answer by ${speedText || 'a split'} second${speedText === 1 ? '' : 's'}`;
+    } else if (aCorrect && !bCorrect) {
+      winnerUid = uid;
+      loserUid = opponentUid;
+      reason = bAnswered ? 'opponent answered wrong' : 'opponent did not answer';
+    } else if (!aCorrect && bCorrect) {
+      winnerUid = opponentUid;
+      loserUid = uid;
+      reason = aAnswered ? 'opponent answered wrong' : 'opponent did not answer';
     } else {
-      const targetUid = pickBattleTarget(uid, outcomes, players, `${uid}-${questionIndex}-critical`);
-      const dealt = applyDamage(outcomes, targetUid, attack + 18);
-      outcomes[uid].damage += dealt;
-      outcomes[uid].lastDamage += dealt;
-      outcomes[uid].power += 10;
-      outcomes[uid].lastPower += 10;
-      label = targetUid ? `Critical raid hit ${players[targetUid]?.name || 'opponent'} for ${dealt} damage` : `Critical raid charged ${attack + 18} power`;
-      type = 'critical';
-      if (targetUid) {
-        outcomes[targetUid].label = `${player.name || 'Opponent'} landed a critical raid for ${dealt} damage`;
-        events.push(eventFor(targetUid, players[targetUid] || {}, outcomes[targetUid].label, -dealt, 'hit'));
-      }
+      applyLifeLoss(outcomes, uid, 1);
+      applyLifeLoss(outcomes, opponentUid, 1);
+      outcomes[uid].label = aAnswered ? 'Wrong answer: -1 life.' : 'No answer: -1 life.';
+      outcomes[opponentUid].label = bAnswered ? 'Wrong answer: -1 life.' : 'No answer: -1 life.';
+      events.push(eventFor(uid, player, outcomes[uid].label, -1, 'battle-loss'));
+      events.push(eventFor(opponentUid, opponent, outcomes[opponentUid].label, -1, 'battle-loss'));
+      return;
     }
 
-    outcomes[uid].label = label;
-    events.push(eventFor(uid, player, label, outcomes[uid].lastDamage || outcomes[uid].lastPower || outcomes[uid].lastShield, type));
+    const loser = loserUid === uid ? player : opponent;
+    const winner = winnerUid === uid ? player : opponent;
+    applyLifeLoss(outcomes, loserUid, 1);
+    outcomes[winnerUid].damage += 1;
+    outcomes[winnerUid].lastDamage += 1;
+    outcomes[winnerUid].label = `Won matchup vs ${loser.name || 'opponent'} — kept all lives (${reason}).`;
+    outcomes[loserUid].label = `Lost matchup vs ${winner.name || 'opponent'} — -1 life (${reason}).`;
+    events.push(eventFor(winnerUid, winner, outcomes[winnerUid].label, 1, 'battle-win'));
+    events.push(eventFor(loserUid, loser, outcomes[loserUid].label, -1, 'battle-loss'));
   });
 
   Object.entries(outcomes).forEach(([uid, outcome]) => {
-    const oldScore = Number(players[uid]?.score || 0);
-    outcome.health = LQ.clamp(Math.round(outcome.health), 0, BATTLE_START_HEALTH);
-    outcome.shield = LQ.clamp(Math.round(outcome.shield), 0, 60);
+    const oldScore = Number(players[uid]?.score ?? Number(players[uid]?.health ?? startingLives));
+    outcome.health = LQ.clamp(Math.round(outcome.health), 0, startingLives);
     outcome.damage = Math.round(outcome.damage);
-    outcome.power = Math.round(outcome.power);
-    outcome.score = Math.round(outcome.health + outcome.damage + outcome.power + outcome.shield * 0.5);
+    outcome.power = 0;
+    outcome.shield = 0;
+    outcome.score = outcome.health;
     outcome.lastGain = outcome.score - oldScore;
+    if (outcome.health <= 0 && !String(outcome.label || '').includes('Eliminated')) {
+      outcome.label = `${outcome.label} Eliminated.`;
+    }
   });
   return { players: outcomes, events };
+}
+
+function applyLifeLoss(outcomes, uid, lives) {
+  if (!uid || !outcomes[uid]) return;
+  const loss = Math.min(Number(outcomes[uid].health || 0), Number(lives || 1));
+  outcomes[uid].health -= loss;
+  outcomes[uid].lastHealthChange -= loss;
+}
+
+function buildBattlePairs(players, questionIndex) {
+  const candidates = Object.keys(players || {})
+    .filter(uid => players[uid]?.name && (Number(players[uid]?.health ?? BATTLE_START_HEALTH) > 0 || Number(questionIndex || 0) === 0))
+    .sort((a, b) => seededNumber(`${questionIndex}-${a}`) - seededNumber(`${questionIndex}-${b}`));
+  const pairs = {};
+  for (let i = 0; i < candidates.length; i += 2) {
+    const a = candidates[i];
+    const b = candidates[i + 1] || '';
+    pairs[a] = b;
+    if (b) pairs[b] = a;
+  }
+  return pairs;
 }
 
 function eventFor(uid, player, label, value, type = '') {
@@ -1728,7 +1789,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.power || 0) - Number(a.power || 0)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }

@@ -963,7 +963,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Separate mode-selection flow and self-paced game polish: 20260630-blendfix-v5 */
+/* Separate mode-selection flow and self-paced game polish: 20260630-battle-royale-v1 */
 .mode-select-shell {
   place-items: center;
 }
@@ -1186,7 +1186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Gold Rush polish and safer mobile spacing: 20260630-blendfix-v5 */
+/* Gold Rush polish and safer mobile spacing: 20260630-battle-royale-v1 */
 .app-shell, .center-shell, .player-shell {
   padding-top: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-top) + .85rem));
   padding-bottom: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-bottom) + 1rem));
@@ -1519,7 +1519,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Player-side Gold Rush timer/logo fixes: 20260630-blendfix-v5 */
+/* Player-side Gold Rush timer/logo fixes: 20260630-battle-royale-v1 */
 .player-round-logo {
   display: inline-flex;
   align-items: center;
@@ -1561,7 +1561,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Transparent Gold Rush asset blend fix: 20260630-blendfix-v5 */
+/* Transparent Gold Rush asset blend fix: 20260630-battle-royale-v1 */
 .chest-choice-img,
 .opening-chest-img,
 .result-art-img {
@@ -1573,7 +1573,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   overflow: visible;
 }
 
-/* Cadet Race gameplay asset integration: 20260630-race-assets-v1 */
+/* Cadet Race gameplay asset integration: 20260630-battle-royale-v1 */
 .race-play .player-shell {
   background:
     radial-gradient(circle at 16% 10%, rgba(255,216,77,.26), transparent 24rem),
@@ -1818,4 +1818,104 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 @media (max-width: 720px) {
   .race-route-choice { place-items: center stretch; }
   .race-route-choice strong, .race-route-choice small { text-align: left; }
+}
+
+/* Gold Rush target picker and Battle Royale updates: 20260630-battle-royale-v1 */
+.steal-target-intro {
+  text-align: center;
+}
+.steal-target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: .85rem;
+}
+.steal-target-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.3rem 1fr;
+  gap: .15rem .7rem;
+  align-items: center;
+  min-height: 5.8rem;
+  padding: .85rem;
+  border-radius: 1.25rem;
+  border: 2px solid rgba(255,216,77,.55);
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,246,201,.95));
+  color: #2c1b00;
+  box-shadow: 0 14px 30px rgba(52,33,0,.16);
+  cursor: pointer;
+  text-align: left;
+}
+.steal-target-card:hover,
+.steal-target-card:focus-visible {
+  transform: translateY(-2px);
+  outline: 3px solid rgba(255,216,77,.85);
+}
+.steal-target-card .rank-badge {
+  position: absolute;
+  top: .45rem;
+  right: .55rem;
+  font-weight: 1000;
+  color: #8a5a00;
+}
+.steal-target-card .target-avatar {
+  grid-row: span 2;
+  width: 3rem;
+  height: 3rem;
+}
+.steal-target-card .avatar-img {
+  width: 3rem;
+  height: 3rem;
+}
+.steal-target-card strong {
+  font-size: 1.05rem;
+  font-weight: 1000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.steal-target-card small {
+  color: #0c3b88;
+  font-weight: 1000;
+}
+.steal-target-card.leader-target {
+  background: radial-gradient(circle at 20% 0%, rgba(255,232,117,.95), rgba(255,255,255,.96) 60%, rgba(255,240,179,.94));
+}
+.battle-royale-board {
+  gap: .75rem;
+}
+.battle-royale-row {
+  grid-template-columns: 2.2rem minmax(80px, .75fr) 1fr auto;
+  background: linear-gradient(135deg, rgba(13,46,112,.82), rgba(35,79,168,.72));
+  border-color: rgba(125,196,255,.35);
+}
+.battle-royale-row .battle-bars {
+  min-height: 1.25rem;
+  background: rgba(255,255,255,.15);
+}
+.battle-royale-row .battle-bars i {
+  background: linear-gradient(90deg, #16c784, #f7d947, #ff884d);
+}
+.battle-result-art {
+  filter: drop-shadow(0 18px 24px rgba(0, 43, 114, .26));
+}
+.mode-event-chip.battle-win,
+.mode-event-chip.battle-bye {
+  background: rgba(22,199,132,.16);
+  color: #075f3a;
+}
+.mode-event-chip.battle-loss {
+  background: rgba(220,38,38,.14);
+  color: #8a1111;
+}
+@media (max-width: 560px) {
+  .steal-target-grid {
+    grid-template-columns: 1fr;
+  }
+  .battle-royale-row {
+    grid-template-columns: 2.2rem 1fr;
+  }
+  .battle-royale-row .battle-bars,
+  .battle-royale-row small {
+    grid-column: 1 / -1;
+  }
 }

@@ -1,61 +1,16 @@
-# JCSO Quest — Self-Paced Game Modes Build
+# JCSO Quest
 
-This build keeps the project in one flat folder for GitHub Pages uploads.
+Single-folder GitHub Pages build.
 
-## Updated host flow
+## Current updates
 
-1. `index.html` → Host a Game
-2. `modes.html` → choose the game mode
-3. `host.html?mode=...` → choose question bank, category, question pool, and game options
-4. Launch the PIN room and start the game
+- **Gold Rush stability update**: player screens no longer fully redraw every time another player earns gold, which should reduce flicker/glitching with 5+ players.
+- **Gold Rush target stealing**: steal chests now pause and let the player choose whose gold to steal from a leaderboard-style target screen.
+- **Gold Rush reward tuning**: normal gold chests now cap at 100 gold. Double/triple gold and steal events can exceed 100.
+- **Gold Rush goals**: host gold goal options now scale up to 100,000,000 gold.
+- **Power Battle**: now works as a Battle Royale instead of a crate reward mode. Players start with host-selected lives, get randomly paired each round, and the faster correct answer wins the matchup. The loser loses 1 life. Wrong or missed answers lose 1 life.
+- **Cadet Race**: uses custom race assets for the race gameplay.
 
-## Modes
+## Upload
 
-- **Classic Quiz**: host-paced Kahoot-style quiz with question timer, reveal, and points leaderboard.
-- **Gold Rush**: self-paced. Correct answers unlock three mystery chests. Chest rewards can give gold, triple gold, steal gold, raid gold, or take gold. The game ends at the gold goal or overall time limit.
-- **Cadet Race**: self-paced. Correct answers unlock route cards and players race toward the distance goal.
-- **Power Battle**: self-paced. Correct answers unlock tactical crates for power, shields, healing, siphons, and battle events.
-
-## Upload notes
-
-Upload all files to the same GitHub Pages folder/repo root. Do not move files into subfolders unless you also update every path.
-
-Important files to replace:
-
-- `index.html`
-- `modes.html`
-- `host.html`
-- `play.html`
-- `common.js`
-- `host.js`
-- `play.js`
-- `styles.css`
-- all included `.png`, `.svg`, `.js`, and `.mp3` files
-
-After uploading, test with one host tab and at least two player tabs.
-
-
-## 20260630 Gold Rush polish update
-
-- Renamed the chest mode everywhere to **Gold Rush**.
-- Uses the Gold Rush mode logo wherever the mode label appears in the player/host UI.
-- Raised Gold Rush host goal options up to 10,000,000 gold.
-- Gold Rush chests now include more frequent percent-based trap, steal, and raid outcomes.
-- Fixed the player-side self-paced countdown so it updates locally every second instead of waiting for the next Firebase update.
-- Kept the project flat for GitHub Pages uploads.
-
-
-## Blend fix update
-
-This build replaces the Gold Rush PNG art with transparent-background versions and cache-busts the image references so mobile browsers do not keep showing the old square/checkerboard backgrounds.
-
-## Cadet Race asset update
-
-- Integrated the custom Cadet Race gameplay assets into the player reward cards, opening screen, result screen, and host race board.
-- Added transparent-background versions of:
-  - `jcso-race-track-md.png`
-  - `jcso-race-car-md.png`
-  - `jcso-patrol-unit-md.png`
-- Replaced generic route-card emoji UI with polished race cards.
-- Updated the host race board to show a race arena and patrol car progress markers.
-- Increased Cadet Race distance goal options up to 5,000 ft.
+Upload every file in this zip to the GitHub Pages repo root. Keep the files flat; do not place them in subfolders.
