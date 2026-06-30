@@ -30,7 +30,7 @@ let lastEndedAudioKey = '';
 const RACE_FINISH_DISTANCE = 120;
 const BATTLE_START_HEALTH = 100;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
-const DEFAULT_GOAL_LIMITS = { 'coin-rush': 500, 'cadet-race': 120, 'power-battle': 500 };
+const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 120, 'power-battle': 500 };
 let processingRewardRequests = new Set();
 let endingInProgress = false;
 
@@ -157,7 +157,7 @@ function renderModePreview() {
   const mode = LQ.getGameMode(els.gameModeSelect?.value || selectedModeId || 'classic');
   if (els.modePreview) {
     els.modePreview.innerHTML = `
-      <div class="mode-preview-icon">${mode.icon}</div>
+      <div class="mode-preview-icon">${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</div>
       <div>
         <strong>${LQ.escapeHtml(mode.name)}</strong>
         <p>${LQ.escapeHtml(mode.description)}</p>
@@ -170,7 +170,7 @@ function renderModePreview() {
       ? ['Host-paced quiz', 'Timed questions', 'Speed points']
       : ['Self-paced game', 'No question timer', 'Goal or time limit'];
     els.selectedModeCard.innerHTML = `
-      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-selfpaced-v2" alt="" loading="lazy" decoding="async" />
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-goldrush-v4" alt="" loading="lazy" decoding="async" />
       <div>
         <p class="eyebrow">Selected mode</p>
         <h2>${LQ.escapeHtml(mode.name)}</h2>
@@ -195,7 +195,7 @@ function renderGameModeOptions() {
     'power-battle': 'Power goal'
   };
   const options = {
-    'coin-rush': [300, 500, 750, 1000, 1500, 2000],
+    'coin-rush': [2000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000],
     'cadet-race': [80, 120, 160, 200, 250, 300],
     'power-battle': [250, 500, 750, 1000, 1500, 2000]
   };
@@ -307,7 +307,7 @@ function renderLobbyStatic() {
   const settings = liveGame?.settings || getSettings();
   const mode = LQ.getGameMode(settings.gameMode || 'classic');
   els.pinDisplay.textContent = gamePin;
-  if (els.lobbyModePill) els.lobbyModePill.textContent = `${mode.icon} ${mode.name}`;
+  if (els.lobbyModePill) els.lobbyModePill.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip pill-mode-logo');
   els.joinUrl.textContent = playerUrl;
   els.joinQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(playerUrl)}`;
 }
@@ -353,7 +353,7 @@ function renderFromGame(game) {
 function renderLobbyPlayers(game) {
   const players = LQ.rankPlayers(game.players || {});
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
-  if (els.lobbyModePill) els.lobbyModePill.textContent = `${mode.icon} ${mode.name}`;
+  if (els.lobbyModePill) els.lobbyModePill.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip pill-mode-logo');
   els.playerCountPill.textContent = `${players.length} joined`;
   if (!players.length) {
     els.lobbyPlayers.className = 'player-grid empty';
@@ -446,7 +446,7 @@ function renderSelfPacedDashboard(game) {
   const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS[mode.id] || 500);
   cleanupTimer();
 
-  if (els.liveModeLabel) els.liveModeLabel.textContent = `${mode.icon} ${mode.name}`;
+  if (els.liveModeLabel) els.liveModeLabel.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip pill-mode-logo');
   if (els.liveObjectiveLabel) els.liveObjectiveLabel.textContent = `${objectiveLabel(mode.id)}: ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
   if (els.livePlayerCount) els.livePlayerCount.textContent = `${players.length} player${players.length === 1 ? '' : 's'}`;
   if (els.liveHeadline) els.liveHeadline.textContent = liveHeadline(mode.id, players[0], goal);
@@ -508,7 +508,7 @@ function renderSelfPacedModeStatus(game, container) {
   const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS[mode.id] || 500);
   if (mode.id === 'coin-rush') {
     container.innerHTML = `
-      <div class="mode-objective"><strong>🧰 Coin Rush</strong><span>Players pick one of three mystery chests after each correct answer.</span></div>
+      <div class="mode-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Players pick one of three mystery chests after each correct answer.</span></div>
       <div class="coin-board">
         ${players.map((p, i) => `<div class="coin-card ${i === 0 ? 'first' : ''}">${LQ.avatarMarkup(p, 'avatar-img')}<strong>${LQ.escapeHtml(p.name || 'Player')}</strong><span>🪙 ${LQ.formatScore(p.coins || 0)} / ${LQ.formatScore(goal)}</span><small>${LQ.escapeHtml(p.lastModeLabel || '')}</small></div>`).join('') || '<span class="muted">No players yet.</span>'}
       </div>
@@ -612,70 +612,97 @@ function calculateSelfPacedReward(modeId, game, playerUid, request, streak) {
 function calculateCoinChestReward(game, playerUid, request, streak) {
   const players = game.players || {};
   const player = players[playerUid] || {};
-  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-coin`;
+  const seed = `${request.requestId}-${playerUid}-${request.chestIndex}-gold-rush`;
   const roll = seededNumber(seed);
-  const base = Math.round(65 + seededNumber(`${seed}-base`) * 70 + Math.min(streak * 10, 80));
-  let coins = Number(player.coins || 0);
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || DEFAULT_GOAL_LIMITS['coin-rush'] || 10000);
+  const baseFloor = Math.max(100, Math.round(goal * 0.025));
+  const baseSpread = Math.max(150, Math.round(goal * 0.035));
+  const streakBonus = Math.round(Math.min(Number(streak || 0), 10) * Math.max(20, goal * 0.002));
+  const base = Math.round(baseFloor + seededNumber(`${seed}-base`) * baseSpread + streakBonus);
+  const currentCoins = Number(player.coins || 0);
   const updates = {};
   let delta = 0;
   let label = '';
   let type = 'gold';
+  let percent = 0;
 
-  if (roll < 0.42) {
+  if (roll < 0.22) {
     delta = base;
     label = `Gold chest: +${delta} gold`;
-    type = 'chest';
-  } else if (roll < 0.64) {
-    delta = base * 3;
-    label = `Triple gold: +${delta} gold`;
+    type = 'gold';
+  } else if (roll < 0.35) {
+    delta = Math.round(base * 2);
+    label = `Large gold chest: +${delta} gold`;
+    type = 'big-gold';
+  } else if (roll < 0.50) {
+    delta = Math.round(base * 3);
+    label = `Triple gold chest: +${delta} gold`;
     type = 'triple';
-  } else if (roll < 0.78) {
-    delta = -Math.min(coins, Math.max(30, Math.round(coins * 0.25)));
-    label = delta < 0 ? `Trap chest took ${Math.abs(delta)} gold` : 'Trap chest was empty — no gold lost';
-    type = 'trap';
-  } else if (roll < 0.94) {
+  } else if (roll < 0.66) {
+    percent = 0.25 + seededNumber(`${seed}-loss-percent`) * 0.25;
+    const pctText = Math.round(percent * 100);
+    if (currentCoins > 0) {
+      delta = -Math.min(currentCoins, Math.max(50, Math.round(currentCoins * percent)));
+      label = `Trap chest: lost ${pctText}% of your gold (${Math.abs(delta)} gold)`;
+    } else {
+      delta = 0;
+      label = `Trap chest: lost ${pctText}% — but your vault was empty`;
+    }
+    type = 'loss-percent';
+  } else if (roll < 0.83) {
     const targetUid = pickRichTarget(playerUid, players, `${seed}-steal`);
+    percent = 0.25 + seededNumber(`${seed}-steal-percent`) * 0.25;
+    const pctText = Math.round(percent * 100);
     if (targetUid) {
       const target = players[targetUid] || {};
-      const stolen = Math.min(Number(target.coins || 0), Math.max(35, Math.round(Number(target.coins || 0) * 0.30)));
+      const targetCurrent = Number(target.coins || 0);
+      const stolen = Math.min(targetCurrent, Math.max(75, Math.round(targetCurrent * percent)));
       delta = stolen;
-      coins += stolen;
-      const targetCoins = Math.max(0, Number(target.coins || 0) - stolen);
+      const targetCoins = Math.max(0, targetCurrent - stolen);
       updates[`players/${targetUid}/coins`] = targetCoins;
       updates[`players/${targetUid}/score`] = targetCoins;
       updates[`players/${targetUid}/lastCoins`] = -stolen;
       updates[`players/${targetUid}/lastGain`] = -stolen;
-      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} stole ${stolen} gold from your vault.`;
-      label = `Steal chest: took ${stolen} gold from ${target.name || 'another player'}`;
-      type = 'steal';
+      updates[`players/${targetUid}/lastRewardType`] = 'stolen-percent';
+      updates[`players/${targetUid}/lastModeLabel`] = `${player.name || 'A player'} stole ${pctText}% of your gold (${stolen} gold).`;
+      label = `Steal chest: stole ${pctText}% from ${target.name || 'another player'} (${stolen} gold)`;
+      type = 'steal-percent';
     } else {
-      delta = base;
-      label = `Steal chest found no target, so you banked +${delta} gold`;
-      type = 'chest';
+      delta = Math.round(base * 1.5);
+      label = `Steal chest: no opponent had gold, so you banked +${delta} gold`;
+      type = 'steal-empty';
     }
-  } else {
+  } else if (roll < 0.96) {
+    percent = 0.10 + seededNumber(`${seed}-raid-percent`) * 0.12;
+    const pctText = Math.round(percent * 100);
     let total = 0;
     Object.entries(players).forEach(([otherUid, other]) => {
       if (otherUid === playerUid || Number(other.coins || 0) <= 0) return;
-      const taken = Math.min(Number(other.coins || 0), Math.max(10, Math.round(Number(other.coins || 0) * 0.12)));
+      const otherCurrent = Number(other.coins || 0);
+      const taken = Math.min(otherCurrent, Math.max(35, Math.round(otherCurrent * percent)));
       total += taken;
-      const nextCoins = Math.max(0, Number(other.coins || 0) - taken);
+      const nextCoins = Math.max(0, otherCurrent - taken);
       updates[`players/${otherUid}/coins`] = nextCoins;
       updates[`players/${otherUid}/score`] = nextCoins;
       updates[`players/${otherUid}/lastCoins`] = -taken;
       updates[`players/${otherUid}/lastGain`] = -taken;
-      updates[`players/${otherUid}/lastModeLabel`] = `${player.name || 'A player'} raided ${taken} gold from your vault.`;
+      updates[`players/${otherUid}/lastRewardType`] = 'raid-loss';
+      updates[`players/${otherUid}/lastModeLabel`] = `${player.name || 'A player'} raided ${pctText}% of your gold (${taken} gold).`;
     });
-    delta = total || base;
-    label = total ? `Vault raid: collected ${total} gold from the room` : `Vault raid bonus: +${delta} gold`;
-    type = 'raid';
+    delta = total || Math.round(base * 2);
+    label = total ? `Vault raid: took ${pctText}% from each opponent (${total} gold)` : `Vault raid: no opponent had gold, bonus +${delta} gold`;
+    type = 'raid-percent';
+  } else {
+    delta = Math.max(Math.round(base * 5), Math.round(goal * 0.10));
+    label = `Jackpot vault: +${delta} gold`;
+    type = 'jackpot';
   }
 
-  if (type !== 'steal') coins += delta;
-  coins = Math.max(0, Math.round(coins));
-  updates[`players/${playerUid}/coins`] = coins;
-  updates[`players/${playerUid}/score`] = coins;
+  const nextCoins = Math.max(0, Math.round(currentCoins + delta));
+  updates[`players/${playerUid}/coins`] = nextCoins;
+  updates[`players/${playerUid}/score`] = nextCoins;
   updates[`players/${playerUid}/lastCoins`] = Math.round(delta);
+  updates[`players/${playerUid}/lastRewardPercent`] = percent ? Math.round(percent * 100) : 0;
   return { updates, label, lastGain: Math.round(delta), type };
 }
 
@@ -1247,7 +1274,7 @@ function renderModeStatus(game) {
 
   if (mode.id === 'coin-rush') {
     els.modeStatusPanel.innerHTML = `
-      <div class="mode-objective"><strong>${mode.icon} Coin Rush</strong><span>Correct answers open chests: gold, triple gold, steal, raid, or trap.</span></div>
+      <div class="mode-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Correct answers open chests: gold, triple gold, steal, raid, or trap.</span></div>
       <div class="coin-board">
         ${players.map((p, i) => `<div class="coin-card ${i === 0 ? 'first' : ''}">${LQ.avatarMarkup(p, 'avatar-img')}<strong>${LQ.escapeHtml(p.name || 'Player')}</strong><span>🪙 ${LQ.formatScore(p.coins || 0)} gold</span></div>`).join('') || '<span class="muted">No players yet.</span>'}
       </div>
@@ -1289,7 +1316,7 @@ function renderModeStatus(game) {
       <small>#${i + 1} · ${formatModeStat(p, mode.id)}</small>
     </div>`).join('');
   els.modeStatusPanel.innerHTML = `
-    <div class="mode-objective"><strong>${mode.icon} ${LQ.escapeHtml(mode.shortName || mode.name)}</strong><span>${LQ.escapeHtml(mode.objective)}</span></div>
+    <div class="mode-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>${LQ.escapeHtml(mode.objective)}</span></div>
     <div class="mode-mini-grid">${cards || '<span class="muted">No players yet.</span>'}</div>
   `;
 }
@@ -1306,11 +1333,11 @@ function renderModeRevealBanner(game) {
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
   const events = game.reveal?.mode?.events || [];
   if (!events.length || mode.id === 'classic') {
-    els.modeRevealBanner.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>${LQ.escapeHtml(mode.scoring)}</span>`;
+    els.modeRevealBanner.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>${LQ.escapeHtml(mode.scoring)}</span>`;
     return;
   }
   els.modeRevealBanner.innerHTML = `
-    <strong>${mode.icon} ${LQ.escapeHtml(mode.name)} round events</strong>
+    <strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')} round events</strong>
     <div class="mode-event-list">
       ${events.map(event => `<span class="mode-event-chip ${LQ.escapeAttr(event.type || '')}">${LQ.avatarMarkup(event, 'avatar-img tiny-avatar-img')} <b>${LQ.escapeHtml(event.name)}</b>: ${LQ.escapeHtml(event.label)}</span>`).join('')}
     </div>
@@ -1323,13 +1350,13 @@ function renderFinalModeSummary(game) {
   const ranked = rankPlayersForMode(game.players || {}, mode.id);
   const top = ranked[0];
   if (!top) {
-    els.finalModeSummary.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>No player results.</span>`;
+    els.finalModeSummary.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>No player results.</span>`;
     return;
   }
   const winLine = mode.id === 'classic'
     ? `${LQ.formatScore(top.score || 0)} points`
     : formatModeStat(top, mode.id);
-  els.finalModeSummary.innerHTML = `<strong>${mode.icon} ${LQ.escapeHtml(mode.name)}</strong><span>Winner: ${LQ.escapeHtml(top.name || 'Player')} with ${winLine}.</span>`;
+  els.finalModeSummary.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Winner: ${LQ.escapeHtml(top.name || 'Player')} with ${winLine}.</span>`;
 }
 
 function calculateModeOutcomes(modeId, roundResults, players, questionIndex) {

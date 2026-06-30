@@ -12,7 +12,7 @@ This build keeps the project in one flat folder for GitHub Pages uploads.
 ## Modes
 
 - **Classic Quiz**: host-paced Kahoot-style quiz with question timer, reveal, and points leaderboard.
-- **Coin Rush**: self-paced. Correct answers unlock three mystery chests. Chest rewards can give gold, triple gold, steal gold, raid gold, or take gold. The game ends at the gold goal or overall time limit.
+- **Gold Rush**: self-paced. Correct answers unlock three mystery chests. Chest rewards can give gold, triple gold, steal gold, raid gold, or take gold. The game ends at the gold goal or overall time limit.
 - **Cadet Race**: self-paced. Correct answers unlock route cards and players race toward the distance goal.
 - **Power Battle**: self-paced. Correct answers unlock tactical crates for power, shields, healing, siphons, and battle events.
 
@@ -33,3 +33,13 @@ Important files to replace:
 - all included `.png`, `.svg`, `.js`, and `.mp3` files
 
 After uploading, test with one host tab and at least two player tabs.
+
+
+## 20260630 Gold Rush polish update
+
+- Renamed the chest mode everywhere to **Gold Rush**.
+- Uses the Gold Rush mode logo wherever the mode label appears in the player/host UI.
+- Raised Gold Rush host goal options up to 10,000,000 gold.
+- Gold Rush chests now include more frequent percent-based trap, steal, and raid outcomes.
+- Fixed the player-side self-paced countdown so it updates locally every second instead of waiting for the next Firebase update.
+- Kept the project flat for GitHub Pages uploads.

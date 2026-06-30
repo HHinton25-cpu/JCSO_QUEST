@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-selfpaced-v2';
+  const APP_VERSION = '20260630-goldrush-v4';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',
@@ -133,8 +133,8 @@
       id: 'coin-rush',
       icon: '🧰',
       image: 'jcso-mode-gold-rush-md.png',
-      name: 'Coin Rush',
-      shortName: 'Coin Rush',
+      name: 'Gold Rush',
+      shortName: 'Gold Rush',
       description: 'Self-paced questions unlock three mystery chests. Pick one to gain gold, triple gold, lose gold, steal, or raid.',
       scoring: 'The leaderboard is based on gold. The game ends at the host’s gold goal or time limit.',
       objective: 'Answer at your own pace, open chests, and reach the gold goal first.'
@@ -178,6 +178,16 @@
 
   function getGameMode(id) {
     return gameModes.find(mode => mode.id === id) || gameModes[0];
+  }
+
+  function modeLogoMarkup(modeOrId, className = 'mode-logo-chip') {
+    const mode = typeof modeOrId === 'string' ? getGameMode(modeOrId) : (modeOrId || getGameMode('classic'));
+    const safeClass = escapeAttr(className);
+    const label = escapeHtml(mode.shortName || mode.name || 'Game Mode');
+    if (mode.image) {
+      return `<span class="${safeClass}"><img src="${escapeAttr(mode.image)}?v=${APP_VERSION}" alt="${escapeAttr(mode.name)}" loading="lazy" decoding="async" /><span>${label}</span></span>`;
+    }
+    return `<span class="${safeClass}"><span aria-hidden="true">${escapeHtml(mode.icon || '🎮')}</span><span>${label}</span></span>`;
   }
 
   function $(id) {
@@ -635,6 +645,6 @@
   window.LiveQuiz = {
     $, escapeHtml, escapeAttr, loadQuestionBank, loadQuestionSets, shuffle, countBy, makePin, buildPlayerUrl,
     getParam, isFirebaseConfigured, rankPlayers, showScreen, setStatus, copyText, formatScore,
-    APP_VERSION, clamp, animateNumber, answerStyles, answerShapes, avatarOptions, gameModes, getAvatar, avatarMarkup, getGameMode, Sounds: createSoundEngine()
+    APP_VERSION, clamp, animateNumber, answerStyles, answerShapes, avatarOptions, gameModes, getAvatar, avatarMarkup, getGameMode, modeLogoMarkup, Sounds: createSoundEngine()
   };
 })();

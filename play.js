@@ -229,18 +229,20 @@ function renderFromGame(game) {
 }
 
 function renderLobby(game) {
+  document.body.classList.remove('gold-rush-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const avatar = LQ.getAvatar(me.avatarId || selectedAvatarId);
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
   els.lobbyName.textContent = playerName || me.name || 'Player';
   if (els.lobbyAvatar) els.lobbyAvatar.innerHTML = LQ.avatarMarkup(me.avatarId ? me : avatar, 'avatar-img large-avatar-img');
-  if (els.lobbyMode) els.lobbyMode.textContent = `${mode.icon} ${mode.name}: ${mode.objective}`;
+  if (els.lobbyMode) els.lobbyMode.innerHTML = `${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')} <span>${LQ.escapeHtml(mode.objective)}</span>`;
   els.lobbyPin.textContent = game.state?.pin || joinedPin;
   LQ.showScreen('lobby');
 }
 
 function renderQuestion(game) {
+  document.body.classList.remove('gold-rush-play');
   const q = game.question || {};
   const state = game.state || {};
   const me = game.players?.[uid] || {};
@@ -251,7 +253,7 @@ function renderQuestion(game) {
   const mode = LQ.getGameMode(game.settings?.gameMode || 'classic');
   els.playerRound.textContent = `Question ${Number(state.questionIndex || 0) + 1} / ${Number(state.questionCount || 0)}`;
   els.playerScore.textContent = formatMainPlayerStat(me, mode.id);
-  if (els.playerMode) els.playerMode.textContent = `${mode.icon} ${mode.shortName || mode.name}`;
+  if (els.playerMode) els.playerMode.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip player-mode-logo');
   if (els.playerCoins) els.playerCoins.textContent = formatPlayerModeStat(me, mode.id);
   els.playerCategory.textContent = q.category || 'Category';
   els.playerQuestion.textContent = q.text || 'Pick your answer';
@@ -347,6 +349,7 @@ function getMyAnswer(game) {
 function renderSelfPacedPlay(game) {
   cleanupTimer();
   const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
+  document.body.classList.toggle('gold-rush-play', mode.id === 'coin-rush');
   const me = game.players?.[uid] || {};
   const questionBank = game.questionBank || [];
   if (!questionBank.length) {
@@ -358,13 +361,13 @@ function renderSelfPacedPlay(game) {
   const qIndex = Number(me.selfQuestionIndex || 0) % questionBank.length;
   const q = questionBank[qIndex];
   const questionKey = `${qIndex}_${q.id || q.question}`;
-  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || 500);
+  const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || (mode.id === 'coin-rush' ? 10000 : 500));
 
-  els.playerRound.textContent = `Self-paced · Question ${Number(me.played || 0) + 1}`;
+  els.playerRound.innerHTML = `${LQ.modeLogoMarkup(mode, 'mode-logo-chip player-round-logo')} <span>Question ${Number(me.played || 0) + 1}</span>`;
   els.playerScore.textContent = formatMainPlayerStat(me, mode.id);
-  if (els.playerMode) els.playerMode.textContent = `${mode.icon} ${mode.shortName || mode.name}`;
-  if (els.playerCoins) els.playerCoins.textContent = `${formatPlayerModeStat(me, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
-  if (els.playerTimer) els.playerTimer.textContent = timeLeftLabel(game);
+  if (els.playerMode) els.playerMode.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip player-mode-logo');
+  if (els.playerCoins) els.playerCoins.textContent = mode.id === 'coin-rush' ? `Vault ${LQ.formatScore(me.coins || 0)} gold • Goal ${LQ.formatScore(goal)}` : `${formatPlayerModeStat(me, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
+  startSelfPacedClock(game);
   els.playerCategory.textContent = q.category || 'Category';
   els.playerQuestion.textContent = q.question || 'Pick your answer';
   els.playerAnswers.innerHTML = '';
@@ -409,6 +412,26 @@ function timeLeftLabel(game) {
   const minutes = Math.floor(ms / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function startSelfPacedClock(game) {
+  cleanupTimer();
+  const tick = () => {
+    const current = liveGame || game;
+    if (!current || current.state?.phase !== 'play') {
+      cleanupTimer();
+      return;
+    }
+    if (els.playerTimer) els.playerTimer.textContent = timeLeftLabel(current);
+    const endsAt = Number(current.state?.endsAt || 0);
+    if (endsAt && Date.now() >= endsAt) {
+      if (els.playerTimer) els.playerTimer.textContent = '0:00';
+      LQ.setStatus(els.answerStatus, 'Time is up. Waiting for the final leaderboard…', '');
+    }
+  };
+  tick();
+  const endsAt = Number((liveGame || game)?.state?.endsAt || 0);
+  if (endsAt) timerId = setInterval(tick, 1000);
 }
 
 function objectiveUnit(modeId) {
@@ -466,17 +489,18 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
   if (!els.chestPanel) return;
   els.playerAnswers.innerHTML = '';
   els.chestPanel.classList.remove('hidden');
-  const title = modeId === 'cadet-race' ? 'Choose a route card' : modeId === 'power-battle' ? 'Choose a tactical crate' : 'Choose a reward chest';
+  const title = modeId === 'cadet-race' ? 'Choose a route card' : modeId === 'power-battle' ? 'Choose a tactical crate' : 'Choose a Gold Rush chest';
   const subtitle = modeId === 'coin-rush'
-    ? 'Pick one of the three mystery chests. It can give gold, triple gold, steal gold, raid the room, or take some of your gold.'
+    ? 'Pick one chest. Rewards can add gold, triple your reward, steal a percentage from another player, raid the room, or cost a percentage of your vault.'
     : modeId === 'cadet-race'
       ? 'Pick one of the three route cards. It can move you forward, boost you, swap positions, or slow you down.'
       : 'Pick one of the three tactical crates. It can add power, shield you, heal you, steal power, or overload.';
   els.chestPanel.innerHTML = `
-    <div class="chest-intro">
+    <div class="chest-intro ${modeId === 'coin-rush' ? 'gold-rush-chest-intro' : ''}">
       <p class="eyebrow">Correct answer</p>
-      <h2>${title}</h2>
-      <p>${subtitle}</p>
+      ${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : ''}
+      <h2>${LQ.escapeHtml(title)}</h2>
+      <p>${LQ.escapeHtml(subtitle)}</p>
     </div>
     <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : ''}">
       ${[0, 1, 2].map(i => renderRewardChoiceButton(modeId, questionIndex, choiceIndex, i)).join('')}
@@ -491,10 +515,11 @@ function renderRewardChoiceButton(modeId, questionIndex, choiceIndex, chestIndex
   if (modeId === 'coin-rush') {
     const image = coinRushChestImage(questionIndex, choiceIndex, chestIndex);
     return `
-      <button type="button" class="chest-choice gold-chest-choice" data-chest-index="${chestIndex}">
+      <button type="button" class="chest-choice gold-chest-choice" data-chest-index="${chestIndex}" aria-label="Open mystery chest ${chestIndex + 1}">
+        <span class="chest-glow" aria-hidden="true"></span>
         ${assetImage(image, `Mystery chest ${chestIndex + 1}`, 'chest-choice-img')}
         <strong>Chest ${chestIndex + 1}</strong>
-        <small>Mystery reward</small>
+        <small>Tap to open</small>
       </button>
     `;
   }
@@ -510,7 +535,7 @@ function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
 }
 
 function assetImage(src, alt, className) {
-  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-selfpaced-v2" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
+  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-goldrush-v4" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
 function seededUnit(seed) {
@@ -531,7 +556,7 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
   localChestQuestionKey = '';
   localChestChoiceIndex = -1;
   if (els.chestPanel) {
-    els.chestPanel.innerHTML = '<div class="chest-opening"><div class="loader small-loader"></div><h2>Opening chest…</h2><p>The host is resolving your reward.</p></div>';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art gold-rush-opening">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}<div class="loader small-loader"></div><h2>Opening chest…</h2><p>Gold Rush is resolving your reward.</p></div>`;
   }
   try {
     await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
@@ -558,7 +583,7 @@ function renderOpeningReward(modeId) {
   if (els.chestPanel) {
     els.chestPanel.classList.remove('hidden');
     const art = modeId === 'coin-rush' ? assetImage(GOLD_RUSH_IMAGES.open, 'Opening chest', 'opening-chest-img') : '<div class="loader small-loader"></div>';
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art">${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your chest is being opened.' : 'Your game reward is being resolved.'}</p></div>`;
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'coin-rush' ? 'gold-rush-opening' : ''}">${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your Gold Rush chest is being opened.' : 'Your game reward is being resolved.'}</p></div>`;
   }
   LQ.setStatus(els.answerStatus, 'Opening reward…', '');
 }
@@ -567,13 +592,15 @@ function renderSelfPacedResult(player, modeId) {
   els.playerAnswers.innerHTML = '';
   const correct = Boolean(player.lastCorrect);
   const gain = formatPlayerGain(player, modeId);
-  const cardClass = correct ? 'self-result-card' : 'self-result-card wrong';
+  const rewardType = String(player.lastRewardType || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const cardClass = `${correct ? 'self-result-card' : 'self-result-card wrong'} ${modeId === 'coin-rush' ? 'gold-rush-result-card' : ''} reward-${rewardType || 'none'}`;
   if (els.chestPanel) {
     els.chestPanel.classList.remove('hidden');
     els.chestPanel.innerHTML = `
       <div class="${cardClass}">
+        ${modeId === 'coin-rush' ? `<div class="result-mode-brand">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>` : ''}
         <div class="result-icon mode-result-icon">${resultArtForMode(correct, modeId, player)}</div>
-        <p class="eyebrow">${correct ? 'Reward resolved' : 'No reward'}</p>
+        <p class="eyebrow">${correct ? 'Chest result' : 'No reward'}</p>
         <h2>${LQ.escapeHtml(gain.label || '')}</h2>
         <p class="mode-event-line">${LQ.escapeHtml(formatRevealModeEvent(player, modeId))}</p>
         <p class="result-explanation"><strong>Correct answer:</strong> ${LQ.escapeHtml(player.lastCorrectAnswer || '')}</p>
@@ -601,6 +628,7 @@ async function nextSelfPacedQuestion() {
 }
 
 function renderReveal(game) {
+  document.body.classList.remove('gold-rush-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const reveal = game.reveal || {};
@@ -646,6 +674,7 @@ function renderReveal(game) {
 }
 
 function renderEnded(game) {
+  document.body.classList.remove('gold-rush-play');
   cleanupTimer();
   const endedKey = `${game.state?.endedAt || 'ended'}`;
   if (endedKey !== lastEndedAudioKey) {
@@ -722,14 +751,14 @@ function resultArtForMode(correct, modeId, player) {
   if (modeId !== 'coin-rush' || !correct) return resultIconForMode(correct, modeId, player);
   const type = String(player.lastRewardType || '').toLowerCase();
   let image = GOLD_RUSH_IMAGES.coins;
-  if (type === 'triple') image = GOLD_RUSH_IMAGES.gems;
-  if (type === 'trap') image = GOLD_RUSH_IMAGES.open;
-  if (type === 'steal' || type === 'raid') image = GOLD_RUSH_IMAGES.vault;
+  if (type === 'triple' || type === 'jackpot') image = GOLD_RUSH_IMAGES.gems;
+  if (type === 'loss-percent' || type === 'trap') image = GOLD_RUSH_IMAGES.open;
+  if (type === 'steal-percent' || type === 'steal-empty' || type === 'steal' || type === 'raid-percent' || type === 'raid') image = GOLD_RUSH_IMAGES.vault;
   return assetImage(image, 'Chest reward', 'result-art-img');
 }
 
 function resultIconForMode(correct, modeId, player) {
-  if (modeId === 'coin-rush') return correct ? '🧰' : '×';
+  if (modeId === 'coin-rush') return correct ? '🪙' : '×';
   if (modeId === 'cadet-race') return correct ? '🏁' : '↺';
   if (modeId === 'power-battle') {
     if (Number(player.lastHealthChange || 0) < 0) return '💥';
@@ -739,7 +768,7 @@ function resultIconForMode(correct, modeId, player) {
 }
 
 function resultLabelForMode(correct, modeId, player) {
-  if (modeId === 'coin-rush') return correct ? 'Chest opened!' : 'No chest this round';
+  if (modeId === 'coin-rush') return correct ? 'Gold Rush chest opened!' : 'No chest this round';
   if (modeId === 'cadet-race') return correct ? 'Patrol moved!' : 'Wrong turn';
   if (modeId === 'power-battle') {
     if (Number(player.lastHealthChange || 0) < 0) return 'You took damage';
