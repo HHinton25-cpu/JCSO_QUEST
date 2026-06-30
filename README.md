@@ -31,3 +31,7 @@ Updated with the Power Battle UI pack, 5-life battle flow, simultaneous pairings
 
 ## Lightweight upload note
 This build keeps the Power Battle redesign but compresses the large artwork to WebP and removes unused duplicate assets so GitHub can process it more easily. Extract first, then upload the extracted files into the repo root.
+
+
+## Power Battle native UI fix
+This build removes the large proof/mockup images from live Power Battle gameplay. Power Battle now uses responsive native HTML/CSS components for matchup, countdown/question, waiting, reveal, host board, and final results. The proof images are no longer rendered as page content.

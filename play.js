@@ -30,52 +30,52 @@ const BATTLE_START_HEALTH = 5;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-redesign-light-v1',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-redesign-light-v1',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-redesign-light-v1',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-redesign-light-v1',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-redesign-light-v1',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-redesign-light-v1',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-redesign-light-v1',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-redesign-light-v1',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-redesign-light-v1',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-redesign-light-v1',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-redesign-light-v1',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-redesign-light-v1',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-redesign-light-v1',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-redesign-light-v1',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-redesign-light-v1',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-redesign-light-v1',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-redesign-light-v1',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-redesign-light-v1',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-redesign-light-v1',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-redesign-light-v1',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-redesign-light-v1',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-redesign-light-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-native-ui-v1',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-native-ui-v1',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-native-ui-v1',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-native-ui-v1',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-native-ui-v1',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-native-ui-v1',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-native-ui-v1',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-native-ui-v1',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-native-ui-v1',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-native-ui-v1',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-native-ui-v1',
+  health1: 'jcso-health-1-md.png?v=20260630-power-battle-native-ui-v1',
+  health2: 'jcso-health-2-md.png?v=20260630-power-battle-native-ui-v1',
+  health3: 'jcso-health-3-md.png?v=20260630-power-battle-native-ui-v1',
+  health4: 'jcso-health-4-md.png?v=20260630-power-battle-native-ui-v1',
+  health5: 'jcso-health-5-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-native-ui-v1',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-native-ui-v1',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-native-ui-v1',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-native-ui-v1',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-native-ui-v1',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-native-ui-v1',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-native-ui-v1'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-redesign-light-v1',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-redesign-light-v1',
-  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-redesign-light-v1',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-redesign-light-v1',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-redesign-light-v1',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-redesign-light-v1'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-native-ui-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-native-ui-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-native-ui-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-native-ui-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-native-ui-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-native-ui-v1'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-redesign-light-v1',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-redesign-light-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-redesign-light-v1'
+  track: 'jcso-race-track-md.png?v=20260630-power-battle-native-ui-v1',
+  car: 'jcso-race-car-md.png?v=20260630-power-battle-native-ui-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-native-ui-v1'
 };
 
 const els = {};
@@ -690,43 +690,39 @@ function renderBattleMatchupPanel(game, me, waiting = false) {
   const opponent = opponentUid ? game.players?.[opponentUid] : null;
   const myLives = LQ.clamp(Number(me.health ?? startingLives), 0, startingLives);
   const opponentLives = opponent ? LQ.clamp(Number(opponent.health ?? startingLives), 0, startingLives) : 0;
-  const art = opponent ? (waiting ? BATTLE_IMAGES.waiting : BATTLE_IMAGES.vs) : BATTLE_IMAGES.bye;
+  const isBye = !opponent;
   const statusLine = opponent
-    ? (waiting ? 'Answer locked in — waiting for the matchup result.' : 'Fastest correct answer wins this matchup.')
-    : 'Bye round — you automatically survive this matchup.';
+    ? (waiting ? 'Waiting for your matchup result…' : 'Fastest correct answer wins this matchup.')
+    : 'Bye round — no life lost this round.';
   const headline = opponent
     ? `${LQ.escapeHtml(me.name || playerName || 'You')} vs ${LQ.escapeHtml(opponent.name || 'Opponent')}`
     : `${LQ.escapeHtml(me.name || playerName || 'You')} gets a bye`;
+
   els.chestPanel.classList.remove('hidden');
   els.chestPanel.innerHTML = `
-    <div class="power-battle-stage-card">
-      <div class="power-battle-art-wrap">
-        <img class="power-battle-screen-art" src="${art}" alt="Power Battle matchup" loading="lazy" decoding="async" />
-        <div class="power-battle-avatar-slot left">${LQ.avatarMarkup(me, 'avatar-img power-battle-avatar')}</div>
-        <div class="power-battle-avatar-slot right">${opponent ? LQ.avatarMarkup(opponent, 'avatar-img power-battle-avatar') : '<span class="battle-bye-icon">⭐</span>'}</div>
+    <div class="pb-native-card ${waiting ? 'is-waiting' : ''} ${isBye ? 'is-bye' : ''}">
+      <div class="pb-native-topline">
+        ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
+        <span>${LQ.escapeHtml(headline)}</span>
       </div>
-      <div class="power-battle-stage-caption">
-        <strong>${headline}</strong>
-        <span>${LQ.escapeHtml(statusLine)}</span>
-      </div>
-      <div class="power-battle-stage-meta">
-        <div class="power-battle-player-meta power-battle-card-bg mine">
+      <div class="pb-duel-grid">
+        <div class="pb-fighter pb-blue">
+          <div class="pb-fighter-frame">${LQ.avatarMarkup(me, 'avatar-img pb-fighter-avatar')}</div>
           <strong>${LQ.escapeHtml(me.name || playerName || 'You')}</strong>
-          <div class="power-battle-card-avatar">${LQ.avatarMarkup(me, 'avatar-img power-battle-avatar-card')}</div>
-          <img class="power-battle-health-img" src="${battleHealthAsset(Math.max(1, myLives || 1))}" alt="${myLives} lives" loading="lazy" decoding="async" />
-          <span class="power-battle-card-subtext">Best ${formatReactionTime(me.bestReactionMs)}</span>
+          <img class="pb-health-img" src="${battleHealthAsset(Math.max(1, myLives || 1))}" alt="${myLives} lives" loading="lazy" decoding="async" />
+          <small>${LQ.formatScore(myLives)} lives · best ${formatReactionTime(me.bestReactionMs)}</small>
         </div>
-        <div class="power-battle-stage-center">${opponent ? 'VS' : 'BYE'}</div>
-        <div class="power-battle-player-meta power-battle-card-bg opponent">
+        <div class="pb-vs-core"><span>VS</span></div>
+        <div class="pb-fighter pb-gold">
+          <div class="pb-fighter-frame">${opponent ? LQ.avatarMarkup(opponent, 'avatar-img pb-fighter-avatar') : '<span class="pb-bye-star">★</span>'}</div>
           <strong>${LQ.escapeHtml(opponent?.name || 'Bye Round')}</strong>
-          <div class="power-battle-card-avatar">${opponent ? LQ.avatarMarkup(opponent, 'avatar-img power-battle-avatar-card') : '<span class="battle-bye-icon small">⭐</span>'}</div>
-          ${opponent ? `<img class="power-battle-health-img" src="${battleHealthAsset(Math.max(1, opponentLives || 1))}" alt="${opponentLives} lives" loading="lazy" decoding="async" />` : '<span class="power-battle-bye-copy">No life lost</span>'}
-          <span class="power-battle-card-subtext">${opponent ? `Best ${formatReactionTime(opponent.bestReactionMs)}` : 'Automatic advance'}</span>
+          ${opponent ? `<img class="pb-health-img" src="${battleHealthAsset(Math.max(1, opponentLives || 1))}" alt="${opponentLives} lives" loading="lazy" decoding="async" />` : '<div class="pb-bye-pill">No opponent</div>'}
+          <small>${opponent ? `${LQ.formatScore(opponentLives)} lives · best ${formatReactionTime(opponent.bestReactionMs)}` : 'Automatic advance'}</small>
         </div>
       </div>
-      <div class="battle-reaction-row power-battle-stage-footer">
-        <span>Your best reaction: <strong>${formatReactionTime(me.bestReactionMs)}</strong></span>
-        <span>${opponent ? 'Everyone gets the same question, but only your opponent matters.' : 'Answer normally while the rest of the arena battles.'}</span>
+      <div class="pb-native-status">
+        <span>${waiting ? 'Answer locked in' : 'Power Battle'}</span>
+        <strong>${LQ.escapeHtml(statusLine)}</strong>
       </div>
     </div>
   `;
@@ -739,9 +735,20 @@ function renderBattleEliminated(game, me) {
   els.playerQuestion.textContent = 'You have been eliminated';
   els.chestPanel.classList.remove('hidden');
   els.chestPanel.innerHTML = `
-    <div class="battle-eliminated-card power-battle-stage-card">
-      <img class="power-battle-screen-art" src="${BATTLE_IMAGES.eliminated}" alt="Eliminated" loading="lazy" decoding="async" />
-      <p class="mode-event-line">Best reaction: ${formatReactionTime(me.bestReactionMs)} · Matchup wins: ${LQ.formatScore(me.damage || 0)}</p>
+    <div class="pb-native-card pb-eliminated-panel">
+      <div class="pb-native-topline">
+        ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
+        <span>Eliminated</span>
+      </div>
+      <div class="pb-eliminated-body">
+        ${LQ.avatarMarkup(me, 'avatar-img pb-eliminated-avatar')}
+        <h2>Out of lives</h2>
+        <p>Watch the battle continue.</p>
+        <div class="pb-stat-pills">
+          <span>Best reaction <b>${formatReactionTime(me.bestReactionMs)}</b></span>
+          <span>Wins <b>${LQ.formatScore(me.damage || 0)}</b></span>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -763,7 +770,7 @@ function reactionSort(a, b) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-redesign-light-v1`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-native-ui-v1`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -774,36 +781,42 @@ function renderPowerBattleRevealArt(game, me) {
   const myResult = String(me.lastBattleResult || '');
   const myReaction = Number(me.lastReactionMs || 0);
   const oppReaction = Number(me.lastBattleOpponentReactionMs || 0);
-  const myWonSpeed = myReaction > 0 && (oppReaction <= 0 || myReaction < oppReaction);
-  const oppWonSpeed = oppReaction > 0 && (myReaction <= 0 || oppReaction < myReaction);
+  const myLives = LQ.formatScore(me.health ?? BATTLE_START_HEALTH);
+  const oppLives = opponent ? LQ.formatScore(opponent.health ?? BATTLE_START_HEALTH) : '—';
+  const headline = myResult === 'bye'
+    ? 'Bye round'
+    : myResult === 'both-wrong'
+      ? 'Both players missed'
+      : myResult === 'win'
+        ? 'You won the matchup'
+        : 'You lost 1 life';
+  const resultClass = myResult === 'win' ? 'win' : myResult === 'bye' ? 'bye' : myResult === 'both-wrong' ? 'both-wrong' : 'loss';
   const myBadge = myResult === 'win' ? BATTLE_IMAGES.badgeWinner : myResult === 'bye' ? BATTLE_IMAGES.badgeBye : myResult === 'both-wrong' ? BATTLE_IMAGES.badgeBothWrong : BATTLE_IMAGES.badgeLostLife;
   const oppBadge = myResult === 'win' ? BATTLE_IMAGES.badgeDefeated : myResult === 'bye' ? BATTLE_IMAGES.badgeBye : myResult === 'both-wrong' ? BATTLE_IMAGES.badgeBothWrong : BATTLE_IMAGES.badgeWinner;
-  const myReactionBadge = myWonSpeed ? BATTLE_IMAGES.reactionRoundFast : ((Number(me.bestReactionMs || 0) > 0 && Number(me.bestReactionMs || 0) === myReaction) ? BATTLE_IMAGES.reactionBest : '');
-  const oppReactionBadge = oppWonSpeed ? BATTLE_IMAGES.reactionRoundFast : ((Number(opponent?.bestReactionMs || 0) > 0 && Number(opponent?.bestReactionMs || 0) === oppReaction) ? BATTLE_IMAGES.reactionBest : '');
-  const art = Number(me.health || 0) > 0 ? BATTLE_IMAGES.result : BATTLE_IMAGES.eliminated;
-  const headline = myResult === 'bye' ? 'Bye round' : myResult === 'both-wrong' ? 'Both players missed' : myResult === 'win' ? 'You won the matchup' : 'You lost a life';
   return `
-    <div class="power-battle-reveal-board">
-      <img class="power-battle-result-art" src="${art}" alt="Power Battle result" loading="lazy" decoding="async" />
-      <div class="power-battle-reveal-headline">${headline}</div>
-      <div class="power-battle-reveal-grid">
-        <div class="power-battle-reveal-player power-battle-card-bg">
-          <div class="power-battle-card-avatar">${LQ.avatarMarkup(me, 'avatar-img power-battle-reveal-avatar')}</div>
+    <div class="pb-result-native ${resultClass}">
+      <div class="pb-result-header">
+        ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
+        <h2>${headline}</h2>
+      </div>
+      <div class="pb-result-duel">
+        <div class="pb-result-player mine">
+          <div class="pb-fighter-frame">${LQ.avatarMarkup(me, 'avatar-img pb-result-avatar')}</div>
           <strong>${LQ.escapeHtml(me.name || 'You')}</strong>
-          <img class="power-battle-badge-img" src="${myBadge}" alt="Result badge" loading="lazy" decoding="async" />
-          ${myReactionBadge ? `<img class="power-battle-reaction-badge" src="${myReactionBadge}" alt="Reaction badge" loading="lazy" decoding="async" />` : ''}
-          <span>Reaction: ${formatReactionTime(myReaction)}</span>
-          <span>Lives left: ${LQ.formatScore(me.health ?? BATTLE_START_HEALTH)}</span>
+          <img class="pb-badge-img" src="${myBadge}" alt="" loading="lazy" decoding="async" />
+          <span>Reaction <b>${formatReactionTime(myReaction)}</b></span>
+          <span>Lives <b>${myLives}</b></span>
         </div>
-        <div class="power-battle-reveal-player power-battle-card-bg">
-          <div class="power-battle-card-avatar">${opponent ? LQ.avatarMarkup(opponent, 'avatar-img power-battle-reveal-avatar') : '<span class="battle-bye-icon">⭐</span>'}</div>
+        <div class="pb-vs-core small"><span>VS</span></div>
+        <div class="pb-result-player opponent">
+          <div class="pb-fighter-frame">${opponent ? LQ.avatarMarkup(opponent, 'avatar-img pb-result-avatar') : '<span class="pb-bye-star">★</span>'}</div>
           <strong>${LQ.escapeHtml(opponent?.name || 'Bye')}</strong>
-          <img class="power-battle-badge-img" src="${oppBadge}" alt="Result badge" loading="lazy" decoding="async" />
-          ${oppReactionBadge ? `<img class="power-battle-reaction-badge" src="${oppReactionBadge}" alt="Reaction badge" loading="lazy" decoding="async" />` : ''}
-          <span>Reaction: ${formatReactionTime(oppReaction)}</span>
-          <span>${opponent ? `Lives left: ${LQ.formatScore(opponent.health ?? BATTLE_START_HEALTH)}` : 'Automatic advance'}</span>
+          <img class="pb-badge-img" src="${oppBadge}" alt="" loading="lazy" decoding="async" />
+          <span>Reaction <b>${formatReactionTime(oppReaction)}</b></span>
+          <span>Lives <b>${oppLives}</b></span>
         </div>
       </div>
+      <div class="pb-result-note">${myResult === 'both-wrong' ? 'Both players lose 1 life.' : myResult === 'bye' ? 'No life lost this round.' : 'Fastest correct answer wins the matchup.'}</div>
     </div>`;
 }
 
@@ -998,7 +1011,10 @@ function renderReveal(game) {
     LQ.Sounds.countUp();
   }
 
-  if (shouldAnimate && gain > 0) {
+  if (mode.id === 'power-battle') {
+    if (shouldAnimate) lastGainAnimationKey = revealKey;
+    els.playerGain.textContent = '';
+  } else if (shouldAnimate && gain > 0) {
     lastGainAnimationKey = revealKey;
     LQ.animateNumber(els.playerGain, 0, gain, {
       prefix: '+',
@@ -1019,17 +1035,23 @@ function renderReveal(game) {
 function renderPowerBattleEndHero(game, ranked, me) {
   const winner = ranked[0] || null;
   const isWinner = Boolean(winner && winner.uid === uid);
-  const art = isWinner ? BATTLE_IMAGES.champion : (Number(me?.health || 0) > 0 ? BATTLE_IMAGES.result : BATTLE_IMAGES.eliminated);
-  const badge = isWinner ? BATTLE_IMAGES.badgeWinner : (Number(me?.health || 0) > 0 ? BATTLE_IMAGES.badgeFastest : BATTLE_IMAGES.badgeDefeated);
-  const summary = isWinner
-    ? `Champion • ${LQ.formatScore(me?.damage || 0)} wins • best ${formatReactionTime(me?.bestReactionMs)}`
-    : `Winner: ${LQ.escapeHtml(winner?.name || 'Player')} • Your best ${formatReactionTime(me?.bestReactionMs)}`;
+  const title = isWinner ? 'Power Battle Champion' : 'Power Battle Complete';
+  const subtitle = isWinner
+    ? `You survived with ${LQ.formatScore(me?.health ?? BATTLE_START_HEALTH)} lives.`
+    : `Winner: ${LQ.escapeHtml(winner?.name || 'Player')}`;
   return `
-    <div class="power-battle-final-hero">
-      <img class="power-battle-final-art" src="${art}" alt="Power Battle final result" loading="lazy" decoding="async" />
-      <div class="power-battle-final-copy">
-        <div class="power-battle-final-badge-wrap"><img class="power-battle-badge-img" src="${badge}" alt="Final badge" loading="lazy" decoding="async" /></div>
-        <div class="power-battle-final-summary-text">${summary}</div>
+    <div class="pb-final-native ${isWinner ? 'champion' : ''}">
+      <div class="pb-final-burst">★</div>
+      ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
+      <h2>${title}</h2>
+      <p>${subtitle}</p>
+      <div class="pb-final-player">
+        ${LQ.avatarMarkup(isWinner ? me : (winner || me), 'avatar-img pb-final-avatar')}
+        <strong>${LQ.escapeHtml((isWinner ? me?.name : winner?.name) || 'Player')}</strong>
+      </div>
+      <div class="pb-stat-pills">
+        <span>Best reaction <b>${formatReactionTime(me?.bestReactionMs)}</b></span>
+        <span>Wins <b>${LQ.formatScore(me?.damage || 0)}</b></span>
       </div>
     </div>`;
 }
