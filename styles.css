@@ -963,7 +963,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Separate mode-selection flow and self-paced game polish: 20260630-goldrush-v4 */
+/* Separate mode-selection flow and self-paced game polish: 20260630-blendfix-v5 */
 .mode-select-shell {
   place-items: center;
 }
@@ -1186,7 +1186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Gold Rush polish and safer mobile spacing: 20260630-goldrush-v4 */
+/* Gold Rush polish and safer mobile spacing: 20260630-blendfix-v5 */
 .app-shell, .center-shell, .player-shell {
   padding-top: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-top) + .85rem));
   padding-bottom: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-bottom) + 1rem));
@@ -1519,7 +1519,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Player-side Gold Rush timer/logo fixes: 20260630-goldrush-v4 */
+/* Player-side Gold Rush timer/logo fixes: 20260630-blendfix-v5 */
 .player-round-logo {
   display: inline-flex;
   align-items: center;
@@ -1558,4 +1558,17 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
     width: 2rem;
     height: 2rem;
   }
+}
+
+
+/* Transparent Gold Rush asset blend fix: 20260630-blendfix-v5 */
+.chest-choice-img,
+.opening-chest-img,
+.result-art-img {
+  background: transparent !important;
+  mix-blend-mode: normal;
+}
+.gold-chest-choice,
+.gold-rush-result-card .mode-result-icon {
+  overflow: visible;
 }

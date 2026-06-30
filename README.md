@@ -43,3 +43,8 @@ After uploading, test with one host tab and at least two player tabs.
 - Gold Rush chests now include more frequent percent-based trap, steal, and raid outcomes.
 - Fixed the player-side self-paced countdown so it updates locally every second instead of waiting for the next Firebase update.
 - Kept the project flat for GitHub Pages uploads.
+
+
+## Blend fix update
+
+This build replaces the Gold Rush PNG art with transparent-background versions and cache-busts the image references so mobile browsers do not keep showing the old square/checkerboard backgrounds.

@@ -29,12 +29,12 @@ const RACE_FINISH_DISTANCE = 120;
 const BATTLE_START_HEALTH = 100;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race', 'power-battle']);
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png',
-  rare: 'gold-rush-chest-rare-md.png',
-  open: 'gold-rush-chest-open-md.png',
-  coins: 'gold-rush-coin-pile-md.png',
-  gems: 'gold-rush-gem-pile-md.png',
-  vault: 'gold-rush-vault-open-md.png'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-blendfix-v5',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-blendfix-v5',
+  open: 'gold-rush-chest-open-md.png?v=20260630-blendfix-v5',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-blendfix-v5',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-blendfix-v5',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-blendfix-v5'
 };
 
 const els = {};
@@ -535,7 +535,7 @@ function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
 }
 
 function assetImage(src, alt, className) {
-  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-goldrush-v4" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
+  return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(src)}?v=20260630-blendfix-v5" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
 function seededUnit(seed) {
