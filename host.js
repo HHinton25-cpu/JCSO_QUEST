@@ -32,14 +32,24 @@ const BATTLE_START_HEALTH = 5;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 5 };
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-battle-royale-v1',
-  shield: 'jcso-power-shield-md.png?v=20260630-battle-royale-v1',
-  attack: 'jcso-attack-effect-md.png?v=20260630-battle-royale-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-battle-ui-v2',
+  shield: 'jcso-power-shield-md.png?v=20260630-battle-ui-v2',
+  attack: 'jcso-attack-effect-md.png?v=20260630-battle-ui-v2',
+  vs: 'jcso-vs-screen-md.png?v=20260630-battle-ui-v2',
+  losing: 'jcso-losing-screen-md.png?v=20260630-battle-ui-v2',
+  countdown1: 'jcso-countdown-1-md.png?v=20260630-battle-ui-v2',
+  countdown2: 'jcso-countdown-2-md.png?v=20260630-battle-ui-v2',
+  countdown3: 'jcso-countdown-3-md.png?v=20260630-battle-ui-v2',
+  health5: 'jcso-health-bar-5-md.png?v=20260630-battle-ui-v2',
+  health10: 'jcso-health-bar-10-md.png?v=20260630-battle-ui-v2',
+  health15: 'jcso-health-bar-15-md.png?v=20260630-battle-ui-v2',
+  health20: 'jcso-health-bar-20-md.png?v=20260630-battle-ui-v2',
+  health25: 'jcso-health-bar-25-md.png?v=20260630-battle-ui-v2'
 };
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-battle-royale-v1',
-  car: 'jcso-race-car-md.png?v=20260630-battle-royale-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-royale-v1'
+  track: 'jcso-race-track-md.png?v=20260630-battle-ui-v2',
+  car: 'jcso-race-car-md.png?v=20260630-battle-ui-v2',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-ui-v2'
 };
 let processingRewardRequests = new Set();
 let endingInProgress = false;
@@ -182,7 +192,7 @@ function renderModePreview() {
         ? ['Battle Royale', 'Random matchups', 'Lives decide the winner']
         : ['Self-paced game', 'No question timer', 'Goal or time limit'];
     els.selectedModeCard.innerHTML = `
-      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-battle-royale-v1" alt="" loading="lazy" decoding="async" />
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-battle-ui-v2" alt="" loading="lazy" decoding="async" />
       <div>
         <p class="eyebrow">Selected mode</p>
         <h2>${LQ.escapeHtml(mode.name)}</h2>
@@ -443,6 +453,8 @@ async function startSelfPacedGame() {
     updates[`players/${playerUid}/lastDamage`] = 0;
     updates[`players/${playerUid}/lastHealthChange`] = 0;
     updates[`players/${playerUid}/lastShield`] = 0;
+    updates[`players/${playerUid}/lastReactionMs`] = 0;
+    updates[`players/${playerUid}/bestReactionMs`] = null;
     updates[`players/${playerUid}/lastCorrect`] = false;
     updates[`players/${playerUid}/lastChoiceIndex`] = -1;
     updates[`players/${playerUid}/lastModeLabel`] = 'Game started. Answer a question to unlock rewards.';
@@ -551,14 +563,15 @@ function renderSelfPacedModeStatus(game, container) {
     `;
     return;
   }
+  const startingLives = Number(goal || BATTLE_START_HEALTH);
   container.innerHTML = `
-    <div class="mode-objective"><strong>🛡️ Power Battle</strong><span>Players pick one of three tactical crates after each correct answer.</span></div>
-    <div class="battle-board">
-      ${players.map(p => {
-        const powerPercent = LQ.clamp((Number(p.power || 0) / Math.max(1, goal)) * 100, 0, 100);
-        const health = LQ.clamp(Number(p.health ?? BATTLE_START_HEALTH), 0, BATTLE_START_HEALTH);
-        return `<div class="battle-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${health}%"></i><b style="width:${powerPercent}%"></b></div><small>${LQ.formatScore(p.power || 0)} / ${LQ.formatScore(goal)} power · ${health} HP</small></div>`;
-      }).join('') || '<span class="muted">No battlers yet.</span>'}
+    <div class="mode-objective battle-objective"><strong>${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip mode-logo-inline')}</strong><span>Players are paired into Battle Royale matchups. Fastest correct answer wins; wrong or missed answers lose a life.</span></div>
+    <div class="battle-hero-panel">
+      <img class="battle-vs-art" src="${BATTLE_IMAGES.vs}" alt="Battle Royale versus" loading="lazy" decoding="async" />
+      <div class="battle-speed-card"><strong>Best reaction</strong><span>${bestReactionLine(liveGame || {})}</span></div>
+    </div>
+    <div class="battle-board battle-royale-board">
+      ${players.map(p => renderBattlePlayerRow(p, startingLives, (liveGame || {}).question?.battlePairs || {}, (liveGame || {}).players || {})).join('') || '<span class="muted">No battlers yet.</span>'}
     </div>
   `;
 }
@@ -1012,6 +1025,8 @@ async function nextQuestion() {
         gameUpdate[`players/${playerUid}/lastDamage`] = 0;
         gameUpdate[`players/${playerUid}/lastHealthChange`] = 0;
         gameUpdate[`players/${playerUid}/lastShield`] = 0;
+        gameUpdate[`players/${playerUid}/lastReactionMs`] = 0;
+        gameUpdate[`players/${playerUid}/bestReactionMs`] = null;
         gameUpdate[`players/${playerUid}/lastModeLabel`] = mode.id === 'classic' ? 'Ready for Classic points.' : `Ready for ${mode.name}.`;
         gameUpdate[`players/${playerUid}/lastCorrect`] = false;
         gameUpdate[`players/${playerUid}/lastChoiceIndex`] = -1;
@@ -1091,7 +1106,11 @@ function startTimer(endsAt, onDone) {
   const tick = () => {
     const remainingMs = Math.max(0, endsAt - Date.now());
     const seconds = Math.ceil(remainingMs / 1000);
-    els.timerText.textContent = seconds;
+    if (liveGame?.settings?.gameMode === 'power-battle' && seconds >= 1 && seconds <= 3) {
+      els.timerText.innerHTML = `<img class="battle-countdown-img host-countdown-img" src="${battleCountdownAsset(seconds)}" alt="${seconds}" />`;
+    } else {
+      els.timerText.textContent = seconds;
+    }
     els.timerBar.style.width = `${LQ.clamp((remainingMs / totalMs) * 100, 0, 100)}%`;
     LQ.Sounds.countdownTick(seconds);
     if (remainingMs <= 0) {
@@ -1206,6 +1225,10 @@ async function revealQuestion(manual) {
     updates[`players/${playerUid}/lastDamage`] = outcome.lastDamage;
     updates[`players/${playerUid}/lastHealthChange`] = outcome.lastHealthChange;
     updates[`players/${playerUid}/lastShield`] = outcome.lastShield;
+    updates[`players/${playerUid}/lastReactionMs`] = outcome.lastReactionMs || 0;
+    updates[`players/${playerUid}/bestReactionMs`] = outcome.bestReactionMs || null;
+    updates[`players/${playerUid}/lastBattleOpponent`] = outcome.lastBattleOpponent || '';
+    updates[`players/${playerUid}/lastBattleResult`] = outcome.lastBattleResult || '';
     updates[`players/${playerUid}/lastModeLabel`] = outcome.label;
   });
 
@@ -1316,7 +1339,7 @@ function formatLeaderboardDetail(p, modeId) {
     return `${base} · ${LQ.formatScore(p.distance || 0)} / ${RACE_FINISH_DISTANCE} ft${Number(p.lastDistance || 0) ? ` · ${formatSigned(p.lastDistance)} ft` : ''}`;
   }
   if (modeId === 'power-battle') {
-    return `${base} · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(p.damage || 0)} wins`;
+    return `${base} · ${LQ.formatScore(p.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(p.damage || 0)} wins · best ${formatReactionTime(p.bestReactionMs)}`;
   }
   return `${base}${Number(p.lastGain || 0) ? ` · ${formatSigned(p.lastGain)} pts` : ''}`;
 }
@@ -1354,14 +1377,13 @@ function renderModeStatus(game) {
     const startingLives = Number(game.settings?.goalLimit || BATTLE_START_HEALTH);
     const pairs = game.question?.battlePairs || {};
     els.modeStatusPanel.innerHTML = `
-      <div class="mode-objective battle-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Battle Royale: each player is paired with a random opponent. Faster correct answer wins; wrong or no answer loses 1 life.</span></div>
+      <div class="mode-objective battle-objective"><strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Battle Royale: fastest correct answer wins the head-to-head. Wrong or missed answers lose 1 life.</span></div>
+      <div class="battle-hero-panel">
+        <img class="battle-vs-art" src="${BATTLE_IMAGES.vs}" alt="Battle Royale versus" loading="lazy" decoding="async" />
+        <div class="battle-speed-card"><strong>Best reaction</strong><span>${bestReactionLine(game)}</span></div>
+      </div>
       <div class="battle-board battle-royale-board">
-        ${players.map(p => {
-          const health = LQ.clamp(Number(p.health ?? startingLives), 0, startingLives);
-          const percent = (health / Math.max(1, startingLives)) * 100;
-          const opponentName = pairs[p.uid] && game.players?.[pairs[p.uid]] ? game.players[pairs[p.uid]].name : 'Bye';
-          return `<div class="battle-row battle-royale-row"><span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}</span><strong>${LQ.escapeHtml(p.name || 'Player')}</strong><div class="battle-bars"><i style="width:${percent}%"></i></div><small>${LQ.formatScore(health)} lives · vs ${LQ.escapeHtml(opponentName || 'Bye')} · ${LQ.formatScore(p.damage || 0)} wins</small></div>`;
-        }).join('') || '<span class="muted">No battlers yet.</span>'}
+        ${players.map(p => renderBattlePlayerRow(p, startingLives, pairs, game.players || {})).join('') || '<span class="muted">No battlers yet.</span>'}
       </div>
     `;
     return;
@@ -1393,11 +1415,13 @@ function renderModeRevealBanner(game) {
     els.modeRevealBanner.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>${LQ.escapeHtml(mode.scoring)}</span>`;
     return;
   }
+  const reactionPodium = mode.id === 'power-battle' ? renderBattleReactionPodium(game) : '';
   els.modeRevealBanner.innerHTML = `
     <strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')} round events</strong>
     <div class="mode-event-list">
       ${events.map(event => `<span class="mode-event-chip ${LQ.escapeAttr(event.type || '')}">${LQ.avatarMarkup(event, 'avatar-img tiny-avatar-img')} <b>${LQ.escapeHtml(event.name)}</b>: ${LQ.escapeHtml(event.label)}</span>`).join('')}
     </div>
+    ${reactionPodium}
   `;
 }
 
@@ -1413,7 +1437,8 @@ function renderFinalModeSummary(game) {
   const winLine = mode.id === 'classic'
     ? `${LQ.formatScore(top.score || 0)} points`
     : formatModeStat(top, mode.id);
-  els.finalModeSummary.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Winner: ${LQ.escapeHtml(top.name || 'Player')} with ${winLine}.</span>`;
+  const bestLine = mode.id === 'power-battle' ? ` Fastest reaction: ${bestReactionLine(game)}.` : '';
+  els.finalModeSummary.innerHTML = `<strong>${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')}</strong><span>Winner: ${LQ.escapeHtml(top.name || 'Player')} with ${winLine}.${bestLine}</span>`;
 }
 
 function calculateModeOutcomes(modeId, roundResults, players, questionIndex) {
@@ -1440,6 +1465,10 @@ function createEmptyOutcome(modeId, player) {
     lastDamage: 0,
     lastHealthChange: 0,
     lastShield: 0,
+    lastReactionMs: 0,
+    bestReactionMs: Number(player.bestReactionMs || 0) || null,
+    lastBattleOpponent: '',
+    lastBattleResult: '',
     label: modeId === 'classic' ? 'No points this round.' : 'No mode reward this round.',
     value: 0
   };
@@ -1612,28 +1641,44 @@ function calculateBattleOutcomes(roundResults, players, questionIndex) {
   const outcomes = baseOutcomes(roundResults, players, 'power-battle');
   const events = [];
   const startingLives = Number(liveGame?.settings?.goalLimit || BATTLE_START_HEALTH);
-  Object.keys(outcomes).forEach(uid => {
-    outcomes[uid].health = LQ.clamp(Number(players[uid]?.health ?? startingLives), 0, startingLives);
-    outcomes[uid].shield = 0;
-    outcomes[uid].power = 0;
-    outcomes[uid].damage = Number(players[uid]?.damage || 0);
-    outcomes[uid].score = outcomes[uid].health;
-    outcomes[uid].label = 'Waiting for matchup result.';
+  Object.keys(outcomes).forEach(playerUid => {
+    const result = roundResults[playerUid] || {};
+    const player = players[playerUid] || {};
+    outcomes[playerUid].health = LQ.clamp(Number(player.health ?? startingLives), 0, startingLives);
+    outcomes[playerUid].shield = 0;
+    outcomes[playerUid].power = 0;
+    outcomes[playerUid].damage = Number(player.damage || 0);
+    outcomes[playerUid].score = outcomes[playerUid].health;
+    outcomes[playerUid].lastReactionMs = result.answered ? Math.round(Number(result.elapsed || 0)) : 0;
+    const existingBest = Number(player.bestReactionMs || 0);
+    outcomes[playerUid].bestReactionMs = existingBest || null;
+    if (result.correct && result.answered) {
+      const elapsed = Math.round(Number(result.elapsed || 0));
+      outcomes[playerUid].bestReactionMs = existingBest ? Math.min(existingBest, elapsed) : elapsed;
+    }
+    outcomes[playerUid].label = 'Waiting for matchup result.';
   });
 
   const pairMap = liveGame?.question?.battlePairs || buildBattlePairs(players, questionIndex);
   const handled = new Set();
+  const fastestCorrect = Object.values(roundResults)
+    .filter(result => result && result.correct && result.answered)
+    .sort((a, b) => Number(a.elapsed || 0) - Number(b.elapsed || 0))[0];
 
-  Object.keys(outcomes).forEach(uid => {
-    if (handled.has(uid)) return;
-    handled.add(uid);
-    const opponentUid = pairMap[uid] || '';
-    const result = roundResults[uid];
-    const player = result?.player || players[uid] || {};
+  Object.keys(outcomes).forEach(playerUid => {
+    if (handled.has(playerUid)) return;
+    handled.add(playerUid);
+    const opponentUid = pairMap[playerUid] || '';
+    const result = roundResults[playerUid];
+    const player = result?.player || players[playerUid] || {};
 
     if (!opponentUid || !outcomes[opponentUid]) {
-      outcomes[uid].label = 'Bye round: no opponent this question. No life lost.';
-      events.push(eventFor(uid, player, outcomes[uid].label, 0, 'battle-bye'));
+      outcomes[playerUid].label = result?.correct
+        ? `Bye round: correct in ${formatReactionTime(result.elapsed)}. No life lost.`
+        : 'Bye round: no opponent this question. No life lost.';
+      outcomes[playerUid].lastBattleOpponent = 'Bye';
+      outcomes[playerUid].lastBattleResult = 'bye';
+      events.push(eventFor(playerUid, player, outcomes[playerUid].label, 0, 'battle-bye'));
       return;
     }
 
@@ -1644,6 +1689,8 @@ function calculateBattleOutcomes(roundResults, players, questionIndex) {
     const bCorrect = Boolean(opponentResult?.correct);
     const aAnswered = Boolean(result?.answered);
     const bAnswered = Boolean(opponentResult?.answered);
+    outcomes[playerUid].lastBattleOpponent = opponent.name || 'Opponent';
+    outcomes[opponentUid].lastBattleOpponent = player.name || 'Opponent';
     let winnerUid = '';
     let loserUid = '';
     let reason = '';
@@ -1652,44 +1699,57 @@ function calculateBattleOutcomes(roundResults, players, questionIndex) {
       const aElapsed = Number(result.elapsed || 0);
       const bElapsed = Number(opponentResult.elapsed || 0);
       if (aElapsed === bElapsed) {
-        winnerUid = seededNumber(`${questionIndex}-${uid}-${opponentUid}-tie`) < 0.5 ? uid : opponentUid;
+        winnerUid = seededNumber(`${questionIndex}-${playerUid}-${opponentUid}-tie`) < 0.5 ? playerUid : opponentUid;
       } else {
-        winnerUid = aElapsed < bElapsed ? uid : opponentUid;
+        winnerUid = aElapsed < bElapsed ? playerUid : opponentUid;
       }
-      loserUid = winnerUid === uid ? opponentUid : uid;
-      const speedText = Math.abs(Math.round((aElapsed - bElapsed) / 1000 * 10) / 10);
-      reason = `fastest correct answer by ${speedText || 'a split'} second${speedText === 1 ? '' : 's'}`;
+      loserUid = winnerUid === playerUid ? opponentUid : playerUid;
+      const winnerResult = winnerUid === playerUid ? result : opponentResult;
+      const loserResult = winnerUid === playerUid ? opponentResult : result;
+      const marginMs = Math.abs(Number(result.elapsed || 0) - Number(opponentResult.elapsed || 0));
+      reason = `${formatReactionTime(winnerResult.elapsed)} reaction time, ${formatReactionTime(marginMs)} faster`;
+      outcomes[winnerUid].lastReactionMs = Math.round(Number(winnerResult.elapsed || 0));
+      outcomes[loserUid].lastReactionMs = Math.round(Number(loserResult.elapsed || 0));
     } else if (aCorrect && !bCorrect) {
-      winnerUid = uid;
+      winnerUid = playerUid;
       loserUid = opponentUid;
-      reason = bAnswered ? 'opponent answered wrong' : 'opponent did not answer';
+      reason = bAnswered ? `opponent answered wrong; ${formatReactionTime(result.elapsed)} reaction time` : `opponent did not answer; ${formatReactionTime(result.elapsed)} reaction time`;
     } else if (!aCorrect && bCorrect) {
       winnerUid = opponentUid;
-      loserUid = uid;
-      reason = aAnswered ? 'opponent answered wrong' : 'opponent did not answer';
+      loserUid = playerUid;
+      reason = aAnswered ? `opponent answered wrong; ${formatReactionTime(opponentResult.elapsed)} reaction time` : `opponent did not answer; ${formatReactionTime(opponentResult.elapsed)} reaction time`;
     } else {
-      applyLifeLoss(outcomes, uid, 1);
+      applyLifeLoss(outcomes, playerUid, 1);
       applyLifeLoss(outcomes, opponentUid, 1);
-      outcomes[uid].label = aAnswered ? 'Wrong answer: -1 life.' : 'No answer: -1 life.';
+      outcomes[playerUid].lastBattleResult = 'loss';
+      outcomes[opponentUid].lastBattleResult = 'loss';
+      outcomes[playerUid].label = aAnswered ? 'Wrong answer: -1 life.' : 'No answer: -1 life.';
       outcomes[opponentUid].label = bAnswered ? 'Wrong answer: -1 life.' : 'No answer: -1 life.';
-      events.push(eventFor(uid, player, outcomes[uid].label, -1, 'battle-loss'));
+      events.push(eventFor(playerUid, player, outcomes[playerUid].label, -1, 'battle-loss'));
       events.push(eventFor(opponentUid, opponent, outcomes[opponentUid].label, -1, 'battle-loss'));
       return;
     }
 
-    const loser = loserUid === uid ? player : opponent;
-    const winner = winnerUid === uid ? player : opponent;
+    const loser = loserUid === playerUid ? player : opponent;
+    const winner = winnerUid === playerUid ? player : opponent;
     applyLifeLoss(outcomes, loserUid, 1);
     outcomes[winnerUid].damage += 1;
     outcomes[winnerUid].lastDamage += 1;
+    outcomes[winnerUid].lastBattleResult = 'win';
+    outcomes[loserUid].lastBattleResult = 'loss';
     outcomes[winnerUid].label = `Won matchup vs ${loser.name || 'opponent'} — kept all lives (${reason}).`;
     outcomes[loserUid].label = `Lost matchup vs ${winner.name || 'opponent'} — -1 life (${reason}).`;
     events.push(eventFor(winnerUid, winner, outcomes[winnerUid].label, 1, 'battle-win'));
     events.push(eventFor(loserUid, loser, outcomes[loserUid].label, -1, 'battle-loss'));
   });
 
-  Object.entries(outcomes).forEach(([uid, outcome]) => {
-    const oldScore = Number(players[uid]?.score ?? Number(players[uid]?.health ?? startingLives));
+  if (fastestCorrect) {
+    const fastestPlayer = fastestCorrect.player || players[fastestCorrect.uid] || {};
+    events.unshift(eventFor(fastestCorrect.uid, fastestPlayer, `Fastest reaction: ${formatReactionTime(fastestCorrect.elapsed)}`, 0, 'battle-fastest'));
+  }
+
+  Object.entries(outcomes).forEach(([playerUid, outcome]) => {
+    const oldScore = Number(players[playerUid]?.score ?? Number(players[playerUid]?.health ?? startingLives));
     outcome.health = LQ.clamp(Math.round(outcome.health), 0, startingLives);
     outcome.damage = Math.round(outcome.damage);
     outcome.power = 0;
@@ -1779,6 +1839,70 @@ function applyDamage(outcomes, targetUid, amount) {
   return shieldBlock + healthDamage;
 }
 
+
+function battleCountdownAsset(seconds) {
+  if (Number(seconds) === 1) return BATTLE_IMAGES.countdown1;
+  if (Number(seconds) === 2) return BATTLE_IMAGES.countdown2;
+  return BATTLE_IMAGES.countdown3;
+}
+
+function battleHealthAsset(startingLives) {
+  const lives = Number(startingLives || BATTLE_START_HEALTH);
+  if (lives <= 5) return BATTLE_IMAGES.health5;
+  if (lives <= 10) return BATTLE_IMAGES.health10;
+  if (lives <= 15) return BATTLE_IMAGES.health15;
+  if (lives <= 20) return BATTLE_IMAGES.health20;
+  return BATTLE_IMAGES.health25;
+}
+
+function renderBattlePlayerRow(player, startingLives, pairs = {}, allPlayers = {}) {
+  const health = LQ.clamp(Number(player.health ?? startingLives), 0, startingLives);
+  const percent = (health / Math.max(1, startingLives)) * 100;
+  const opponentName = pairs[player.uid] && allPlayers[pairs[player.uid]] ? allPlayers[pairs[player.uid]].name : 'Bye';
+  const isOut = health <= 0;
+  return `<div class="battle-row battle-royale-row ${isOut ? 'eliminated' : ''}">
+    <span>${LQ.avatarMarkup(player, 'avatar-img tiny-avatar-img')}</span>
+    <strong>${LQ.escapeHtml(player.name || 'Player')}</strong>
+    <div class="battle-health-art-wrap"><img class="battle-health-art" src="${battleHealthAsset(startingLives)}" alt="Health bar" loading="lazy" decoding="async" /><div class="battle-health-meter"><i style="width:${percent}%"></i></div></div>
+    <small>${LQ.formatScore(health)} lives · vs ${LQ.escapeHtml(opponentName || 'Bye')} · ${LQ.formatScore(player.damage || 0)} wins · best ${formatReactionTime(player.bestReactionMs)}</small>
+  </div>`;
+}
+
+function renderBattleReactionPodium(game) {
+  const leaders = battleReactionLeaders(game, 5);
+  if (!leaders.length) return '<div class="reaction-podium"><strong>Best reaction times</strong><span>No correct reaction times yet.</span></div>';
+  return `<div class="reaction-podium"><strong>Best reaction times</strong>${leaders.map((player, i) => `<span><b>#${i + 1}</b> ${LQ.avatarMarkup(player, 'avatar-img tiny-avatar-img')} ${LQ.escapeHtml(player.name || 'Player')} — ${formatReactionTime(player.bestReactionMs)}</span>`).join('')}</div>`;
+}
+
+function battleReactionLeaders(game, limit = 5) {
+  return Object.entries(game?.players || {})
+    .map(([uid, player]) => ({ uid, ...player }))
+    .filter(player => Number(player.bestReactionMs || 0) > 0)
+    .sort(reactionSort)
+    .slice(0, limit);
+}
+
+function bestReactionLine(game) {
+  const leader = battleReactionLeaders(game, 1)[0];
+  return leader ? `${leader.name || 'Player'} • ${formatReactionTime(leader.bestReactionMs)}` : 'No correct times yet';
+}
+
+function formatReactionTime(ms) {
+  const value = Number(ms || 0);
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  if (value >= 60000) return `${Math.round(value / 1000)}s`;
+  return `${(value / 1000).toFixed(value < 10000 ? 2 : 1)}s`;
+}
+
+function reactionSort(a, b) {
+  const av = Number(a.bestReactionMs || 0);
+  const bv = Number(b.bestReactionMs || 0);
+  if (av && bv) return av - bv;
+  if (av && !bv) return -1;
+  if (!av && bv) return 1;
+  return 0;
+}
+
 function rankPlayersForMode(playersObj, modeId) {
   const players = Object.entries(playersObj || {}).map(([uid, player]) => ({ uid, ...player }));
   const nameSort = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
@@ -1789,7 +1913,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || reactionSort(a, b) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }

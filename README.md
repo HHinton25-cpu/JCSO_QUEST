@@ -1,16 +1,23 @@
-# JCSO Quest
+# JCSO Quest — Battle Royale UI + Reaction Time Build
 
-Single-folder GitHub Pages build.
+Single-folder GitHub Pages build. Upload all files in this zip into the repo root.
 
-## Current updates
+## Included in this build
 
-- **Gold Rush stability update**: player screens no longer fully redraw every time another player earns gold, which should reduce flicker/glitching with 5+ players.
-- **Gold Rush target stealing**: steal chests now pause and let the player choose whose gold to steal from a leaderboard-style target screen.
-- **Gold Rush reward tuning**: normal gold chests now cap at 100 gold. Double/triple gold and steal events can exceed 100.
-- **Gold Rush goals**: host gold goal options now scale up to 100,000,000 gold.
-- **Power Battle**: now works as a Battle Royale instead of a crate reward mode. Players start with host-selected lives, get randomly paired each round, and the faster correct answer wins the matchup. The loser loses 1 life. Wrong or missed answers lose 1 life.
-- **Cadet Race**: uses custom race assets for the race gameplay.
+- Gold Rush fixes from the previous build remain intact.
+- Cadet Race custom assets remain intact.
+- Battle Royale now uses the new custom battle UI assets:
+  - VS screen
+  - losing screen
+  - countdown 3 / 2 / 1 images
+  - custom health-bar images
+- Battle Royale now tracks reaction times:
+  - each player's latest reaction time
+  - each player's best correct reaction time
+  - the fastest reaction time for the round
+  - best reaction-time leaders on the host reveal and final screens
+- Battle Royale scoring remains lives first, then wins, then best reaction time.
 
-## Upload
+## Upload note
 
-Upload every file in this zip to the GitHub Pages repo root. Keep the files flat; do not place them in subfolders.
+Keep the structure flat. Do not put files into folders.

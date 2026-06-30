@@ -30,23 +30,33 @@ const BATTLE_START_HEALTH = 5;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-battle-royale-v1',
-  shield: 'jcso-power-shield-md.png?v=20260630-battle-royale-v1',
-  attack: 'jcso-attack-effect-md.png?v=20260630-battle-royale-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-battle-ui-v2',
+  shield: 'jcso-power-shield-md.png?v=20260630-battle-ui-v2',
+  attack: 'jcso-attack-effect-md.png?v=20260630-battle-ui-v2',
+  vs: 'jcso-vs-screen-md.png?v=20260630-battle-ui-v2',
+  losing: 'jcso-losing-screen-md.png?v=20260630-battle-ui-v2',
+  countdown1: 'jcso-countdown-1-md.png?v=20260630-battle-ui-v2',
+  countdown2: 'jcso-countdown-2-md.png?v=20260630-battle-ui-v2',
+  countdown3: 'jcso-countdown-3-md.png?v=20260630-battle-ui-v2',
+  health5: 'jcso-health-bar-5-md.png?v=20260630-battle-ui-v2',
+  health10: 'jcso-health-bar-10-md.png?v=20260630-battle-ui-v2',
+  health15: 'jcso-health-bar-15-md.png?v=20260630-battle-ui-v2',
+  health20: 'jcso-health-bar-20-md.png?v=20260630-battle-ui-v2',
+  health25: 'jcso-health-bar-25-md.png?v=20260630-battle-ui-v2'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-battle-royale-v1',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-battle-royale-v1',
-  open: 'gold-rush-chest-open-md.png?v=20260630-battle-royale-v1',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-battle-royale-v1',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-battle-royale-v1',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-battle-royale-v1'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-battle-ui-v2',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-battle-ui-v2',
+  open: 'gold-rush-chest-open-md.png?v=20260630-battle-ui-v2',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-battle-ui-v2',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-battle-ui-v2',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-battle-ui-v2'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-battle-royale-v1',
-  car: 'jcso-race-car-md.png?v=20260630-battle-royale-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-royale-v1'
+  track: 'jcso-race-track-md.png?v=20260630-battle-ui-v2',
+  car: 'jcso-race-car-md.png?v=20260630-battle-ui-v2',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-battle-ui-v2'
 };
 
 const els = {};
@@ -180,6 +190,10 @@ async function joinGame() {
     lastDamage: 0,
     lastHealthChange: 0,
     lastShield: 0,
+    lastReactionMs: 0,
+    bestReactionMs: null,
+    lastBattleOpponent: '',
+    lastBattleResult: '',
     lastModeLabel: '',
     lastCorrect: false,
     lastChoiceIndex: -1,
@@ -242,7 +256,7 @@ function renderFromGame(game) {
 }
 
 function renderLobby(game) {
-  document.body.classList.remove('gold-rush-play', 'race-play');
+  document.body.classList.remove('gold-rush-play', 'race-play', 'battle-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const avatar = LQ.getAvatar(me.avatarId || selectedAvatarId);
@@ -255,7 +269,7 @@ function renderLobby(game) {
 }
 
 function renderQuestion(game) {
-  document.body.classList.remove('gold-rush-play', 'race-play');
+  document.body.classList.remove('gold-rush-play', 'race-play', 'battle-play');
   const q = game.question || {};
   const state = game.state || {};
   const me = game.players?.[uid] || {};
@@ -274,15 +288,22 @@ function renderQuestion(game) {
 
   if (!eligible) {
     const message = mode.id === 'power-battle'
-      ? 'You are out of this Battle Royale round. Watch the leaderboard for the winner.'
+      ? 'You are out of this Battle Royale. Watch the leaderboard for the winner.'
       : 'You joined during this question. You will be able to answer the next one.';
-    LQ.setStatus(els.answerStatus, message, '');
-    LQ.showScreen('answered');
+    if (mode.id === 'power-battle') {
+      renderBattleEliminated(game, me);
+      LQ.setStatus(els.answerStatus, message, '');
+      LQ.showScreen('question');
+    } else {
+      LQ.setStatus(els.answerStatus, message, '');
+      LQ.showScreen('answered');
+    }
     cleanupTimer();
     return;
   }
 
   if (answered) {
+    if (mode.id === 'power-battle') renderBattleMatchupPanel(game, me, true);
     LQ.showScreen('answered');
     cleanupTimer();
     return;
@@ -298,13 +319,16 @@ function renderQuestion(game) {
     button.addEventListener('click', () => submitAnswer(Number(button.dataset.choiceIndex)));
   });
   if (mode.id === 'power-battle') {
+    document.body.classList.add('battle-play');
+    renderBattleMatchupPanel(game, me, false);
     const opponentUid = q.battlePairs?.[uid] || '';
     const opponent = opponentUid ? game.players?.[opponentUid] : null;
     const opponentName = opponent?.name || 'a bye round';
     LQ.setStatus(els.answerStatus, opponentUid
-      ? `Battle Royale: you are matched against ${opponentName}. Fastest correct answer wins; wrong or no answer loses 1 life.`
+      ? `Battle Royale: matched against ${opponentName}. Fastest correct answer wins; wrong or no answer loses 1 life.`
       : 'Battle Royale: bye round. Answer to stay sharp while the others battle.', '');
   } else {
+    if (els.chestPanel) els.chestPanel.classList.add('hidden');
     LQ.setStatus(els.answerStatus, 'Choose an answer before time runs out.');
   }
   LQ.showScreen('question');
@@ -316,7 +340,11 @@ function startTimer(endsAt) {
   const tick = () => {
     const remainingMs = Math.max(0, endsAt - Date.now());
     const seconds = Math.ceil(remainingMs / 1000);
-    els.playerTimer.textContent = seconds;
+    if (document.body.classList.contains('battle-play') && seconds >= 1 && seconds <= 3) {
+      els.playerTimer.innerHTML = `<img class="battle-countdown-img" src="${battleCountdownAsset(seconds)}" alt="${seconds}" />`;
+    } else {
+      els.playerTimer.textContent = seconds;
+    }
     LQ.Sounds.countdownTick(seconds);
     if (remainingMs <= 0) {
       cleanupTimer();
@@ -376,6 +404,7 @@ function renderSelfPacedPlay(game) {
   const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
   document.body.classList.toggle('gold-rush-play', mode.id === 'coin-rush');
   document.body.classList.toggle('race-play', mode.id === 'cadet-race');
+  document.body.classList.remove('battle-play');
   const me = game.players?.[uid] || {};
   const questionBank = game.questionBank || [];
   if (!questionBank.length) {
@@ -611,8 +640,93 @@ function coinRushChestImage(questionIndex, choiceIndex, chestIndex) {
   return variants[(chestIndex + offset) % variants.length];
 }
 
+
+function battleCountdownAsset(seconds) {
+  if (Number(seconds) === 1) return BATTLE_IMAGES.countdown1;
+  if (Number(seconds) === 2) return BATTLE_IMAGES.countdown2;
+  return BATTLE_IMAGES.countdown3;
+}
+
+function battleHealthAsset(startingLives) {
+  const lives = Number(startingLives || BATTLE_START_HEALTH);
+  if (lives <= 5) return BATTLE_IMAGES.health5;
+  if (lives <= 10) return BATTLE_IMAGES.health10;
+  if (lives <= 15) return BATTLE_IMAGES.health15;
+  if (lives <= 20) return BATTLE_IMAGES.health20;
+  return BATTLE_IMAGES.health25;
+}
+
+function renderBattleMatchupPanel(game, me, waiting = false) {
+  if (!els.chestPanel) return;
+  const q = game.question || {};
+  const startingLives = Number(game.settings?.goalLimit || BATTLE_START_HEALTH);
+  const opponentUid = q.battlePairs?.[uid] || '';
+  const opponent = opponentUid ? game.players?.[opponentUid] : null;
+  const myLives = LQ.clamp(Number(me.health ?? startingLives), 0, startingLives);
+  const opponentLives = opponent ? LQ.clamp(Number(opponent.health ?? startingLives), 0, startingLives) : 0;
+  const myPct = (myLives / Math.max(1, startingLives)) * 100;
+  const oppPct = (opponentLives / Math.max(1, startingLives)) * 100;
+  els.chestPanel.classList.remove('hidden');
+  els.chestPanel.innerHTML = `
+    <div class="battle-matchup-panel">
+      <img class="battle-vs-screen" src="${BATTLE_IMAGES.vs}" alt="Battle Royale versus" loading="lazy" decoding="async" />
+      <div class="battle-duel-row">
+        <div class="battle-fighter mine">
+          ${LQ.avatarMarkup(me, 'avatar-img battle-fighter-avatar')}
+          <strong>${LQ.escapeHtml(me.name || playerName || 'You')}</strong>
+          <span>${LQ.formatScore(myLives)} lives</span>
+          <div class="battle-health-art-wrap"><img class="battle-health-art" src="${battleHealthAsset(startingLives)}" alt="Health bar" loading="lazy" decoding="async" /><div class="battle-health-meter"><i style="width:${myPct}%"></i></div></div>
+        </div>
+        <div class="battle-versus-text">VS</div>
+        <div class="battle-fighter opponent">
+          ${opponent ? LQ.avatarMarkup(opponent, 'avatar-img battle-fighter-avatar') : '<span class="battle-bye-icon">⭐</span>'}
+          <strong>${LQ.escapeHtml(opponent?.name || 'Bye Round')}</strong>
+          <span>${opponent ? `${LQ.formatScore(opponentLives)} lives` : 'No opponent'}</span>
+          ${opponent ? `<div class="battle-health-art-wrap"><img class="battle-health-art" src="${battleHealthAsset(startingLives)}" alt="Health bar" loading="lazy" decoding="async" /><div class="battle-health-meter"><i style="width:${oppPct}%"></i></div></div>` : ''}
+        </div>
+      </div>
+      <div class="battle-reaction-row">
+        <span>Your best reaction: <strong>${formatReactionTime(me.bestReactionMs)}</strong></span>
+        <span>${waiting ? 'Answer locked in' : 'Fastest correct answer wins'}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderBattleEliminated(game, me) {
+  if (!els.chestPanel) return;
+  els.playerAnswers.innerHTML = '';
+  els.playerCategory.textContent = 'Battle Royale';
+  els.playerQuestion.textContent = 'You have been eliminated';
+  els.chestPanel.classList.remove('hidden');
+  els.chestPanel.innerHTML = `
+    <div class="battle-eliminated-card">
+      <img class="battle-losing-screen" src="${BATTLE_IMAGES.losing}" alt="Eliminated" loading="lazy" decoding="async" />
+      <h2>Out of lives</h2>
+      <p>Watch the standings to see who survives the final matchup.</p>
+      <p class="mode-event-line">Best reaction: ${formatReactionTime(me.bestReactionMs)} · Matchup wins: ${LQ.formatScore(me.damage || 0)}</p>
+    </div>
+  `;
+}
+
+function formatReactionTime(ms) {
+  const value = Number(ms || 0);
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  if (value >= 60000) return `${Math.round(value / 1000)}s`;
+  return `${(value / 1000).toFixed(value < 10000 ? 2 : 1)}s`;
+}
+
+function reactionSort(a, b) {
+  const av = Number(a.bestReactionMs || 0);
+  const bv = Number(b.bestReactionMs || 0);
+  if (av && bv) return av - bv;
+  if (av && !bv) return -1;
+  if (!av && bv) return 1;
+  return 0;
+}
+
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-battle-royale-v1`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-battle-ui-v2`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -775,7 +889,7 @@ async function nextSelfPacedQuestion() {
 }
 
 function renderReveal(game) {
-  document.body.classList.remove('gold-rush-play', 'race-play');
+  document.body.classList.remove('gold-rush-play', 'race-play', 'battle-play');
   cleanupTimer();
   const me = game.players?.[uid] || {};
   const reveal = game.reveal || {};
@@ -825,7 +939,7 @@ function renderReveal(game) {
 }
 
 function renderEnded(game) {
-  document.body.classList.remove('gold-rush-play', 'race-play');
+  document.body.classList.remove('gold-rush-play', 'race-play', 'battle-play');
   cleanupTimer();
   const endedKey = `${game.state?.endedAt || 'ended'}`;
   if (endedKey !== lastEndedAudioKey) {
@@ -859,7 +973,7 @@ function formatMainPlayerStat(player, modeId) {
 function formatPlayerModeStat(player, modeId) {
   if (modeId === 'coin-rush') return `${LQ.formatScore(player.coins || 0)} gold in vault`;
   if (modeId === 'cadet-race') return `${LQ.formatScore(player.distance || 0)} / ${RACE_FINISH_DISTANCE} ft`;
-  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(player.damage || 0)} wins`;
+  if (modeId === 'power-battle') return `${LQ.formatScore(player.health ?? BATTLE_START_HEALTH)} lives · ${LQ.formatScore(player.damage || 0)} wins · best ${formatReactionTime(player.bestReactionMs)}`;
   return `${LQ.formatScore(player.score || 0)} pts`;
 }
 
@@ -913,8 +1027,11 @@ function resultArtForMode(correct, modeId, player) {
     return assetImage(image, 'Cadet Race result', 'result-art-img race-result-art');
   }
   if (modeId === 'power-battle') {
-    const image = Number(player.lastHealthChange || 0) < 0 ? BATTLE_IMAGES.attack : BATTLE_IMAGES.badge;
-    return assetImage(image, 'Power Battle result', 'result-art-img battle-result-art');
+    let image = BATTLE_IMAGES.badge;
+    if (Number(player.health || 0) <= 0) image = BATTLE_IMAGES.losing;
+    else if (Number(player.lastHealthChange || 0) < 0) image = BATTLE_IMAGES.attack;
+    else if (String(player.lastBattleResult || '') === 'win') image = BATTLE_IMAGES.vs;
+    return assetImage(image, 'Battle Royale result', 'result-art-img battle-result-art');
   }
   return resultIconForMode(correct, modeId, player);
 }
@@ -933,8 +1050,9 @@ function resultLabelForMode(correct, modeId, player) {
   if (modeId === 'coin-rush') return correct ? 'Gold Rush chest opened!' : 'No chest this round';
   if (modeId === 'cadet-race') return correct ? 'Patrol moved!' : 'Wrong turn';
   if (modeId === 'power-battle') {
+    if (Number(player.health || 0) <= 0) return 'Eliminated';
     if (Number(player.lastHealthChange || 0) < 0) return 'Life lost';
-    if (Number(player.lastDamage || 0) > 0) return 'Matchup won';
+    if (Number(player.lastDamage || 0) > 0) return `Matchup won · ${formatReactionTime(player.lastReactionMs)}`;
     return 'Battle round';
   }
   return correct ? 'Correct!' : 'Not this time';
@@ -950,7 +1068,7 @@ function rankPlayersForMode(playersObj, modeId) {
     return players.sort((a, b) => (Number(b.distance || 0) - Number(a.distance || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   if (modeId === 'power-battle') {
-    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
+    return players.sort((a, b) => (Number(b.health ?? BATTLE_START_HEALTH) - Number(a.health ?? BATTLE_START_HEALTH)) || (Number(b.damage || 0) - Number(a.damage || 0)) || reactionSort(a, b) || (Number(b.correct || 0) - Number(a.correct || 0)) || nameSort(a, b));
   }
   return LQ.rankPlayers(playersObj);
 }
