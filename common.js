@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-battle-ui-v2';
+  const APP_VERSION = '20260630-power-battle-light-v3';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',
@@ -153,11 +153,11 @@
       id: 'power-battle',
       icon: '🛡️',
       image: 'jcso-mode-power-battle-md.png',
-      name: 'Battle Royale',
-      shortName: 'Battle Royale',
-      description: 'Battle Royale pairs players each round. The fastest correct answer wins the matchup; wrong or missed answers lose a life.',
-      scoring: 'The leaderboard is based on remaining lives, matchup wins, and best reaction time. The last player standing wins.',
-      objective: 'Stay alive, answer correctly, and post the fastest reaction times.'
+      name: 'Power Battle',
+      shortName: 'Power Battle',
+      description: 'Power Battle pairs players each round. Everyone sees the same question, but each player only battles their assigned opponent. The fastest correct answer wins; wrong or missed answers lose a life.',
+      scoring: 'The leaderboard is based on remaining lives, matchup wins, and best reaction time. Players start with 5 lives and the last player standing wins.',
+      objective: 'Survive every matchup, answer correctly, and post the fastest reaction times.'
     }
   ];
 
