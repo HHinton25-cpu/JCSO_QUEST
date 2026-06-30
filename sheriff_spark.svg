@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Sheriff Spark</title>
+  <desc>Original square cartoon law enforcement themed game character: Town Guardian.</desc>
+  
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="37" y="36" width="182" height="184" rx="34" fill="#D6862F" filter="url(#softShadow)" stroke="#111827" stroke-width="7"/>
+  <rect x="51" y="48" width="154" height="88" rx="26" fill="url(#shine)" opacity=".8"/>
+  <path d="M88 80 q40-47 80 0 q-4 17-16 22 q-24-18-48 0 q-12-5-16-22z" fill="#874C1D" stroke="#111827" stroke-width="5"/><path d="M50 98 q78-30 156 0 q-12 21-156 0z" fill="#874C1D" stroke="#111827" stroke-width="5"/><path d="M96 84 q32-13 64 0" stroke="#FFD46B" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="96" cy="108" r="10" fill="#1B1B1B"/><circle cx="160" cy="108" r="10" fill="#1B1B1B"/><circle cx="100" cy="104" r="3" fill="#fff"/><circle cx="164" cy="104" r="3" fill="#fff"/>
+  <path d="M108 128 q20 24 40 0" stroke="#1B1B1B" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M72 199 q56 27 112 0" fill="#874C1D" opacity=".65"/>
+  <polygon points="128,132 135,148 153,149 139,160 144,178 128,168 112,178 117,160 103,149 121,148" fill="#FFD46B" stroke="#874C1D" stroke-width="4" stroke-linejoin="round"/>
+  <ellipse cx="196" cy="152" rx="22" ry="15" fill="none" stroke="#FFD46B" stroke-width="6"/><path d="M178 160 q-23 22-20 47" fill="none" stroke="#FFD46B" stroke-width="6" stroke-linecap="round"/>
+  <path d="M67 56 q34-18 73-12" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".22"/>
+</svg>

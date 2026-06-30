@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Join JCSO Quest</title>
+  <meta name="description" content="Player screen for JCSO Quest." />
+  <link rel="icon" href="favicon.ico?v=20260630-avatarfix" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-avatarfix" />
+  <meta name="theme-color" content="#062B72" />
+  <link rel="stylesheet" href="styles.css?v=20260630-avatarfix" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <main id="app" class="player-shell">
+    <section class="screen active" id="join-screen">
+      <div class="hero-card compact join-card">
+        <div class="brand-row">
+          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-avatarfix" alt="" /></span>
+          <div>
+            <p class="eyebrow">Player Screen</p>
+            <h1>Join JCSO Quest</h1>
+          </div>
+        </div>
+
+        <div id="firebase-warning" class="notice hidden">
+          Firebase is not configured yet. The host needs to paste Firebase settings into <code>firebase-config.js</code> first.
+        </div>
+
+        <label for="pin-input">Game PIN</label>
+        <input id="pin-input" class="pin-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="000000" autocomplete="one-time-code" />
+
+        <label for="name-input">Your name</label>
+        <input id="name-input" maxlength="24" placeholder="Nickname" autocomplete="name" />
+
+        <label>Choose your avatar</label>
+        <div id="avatar-select" class="avatar-select" role="listbox" aria-label="Choose your avatar"></div>
+
+        <button class="primary-btn jumbo" id="join-game" type="button">Join Game</button>
+        <p id="join-status" class="status small"></p>
+      </div>
+    </section>
+
+    <section class="screen" id="lobby-screen">
+      <div class="player-card waiting-card">
+        <div class="big-avatar" id="lobby-avatar"><img class="avatar-img large-avatar-img" src="./patrol_pals.svg?v=20260630-avatarfix" alt="Patrol Pals"></div>
+        <div class="pulse-dot"></div>
+        <p class="eyebrow">You’re in</p>
+        <h1 id="lobby-name">Player</h1>
+        <p id="lobby-mode" class="mode-event-line">Waiting for the host to start…</p>
+        <div class="pill">PIN <span id="lobby-pin">000000</span></div>
+      </div>
+    </section>
+
+    <section class="screen" id="question-screen">
+      <header class="player-topbar">
+        <div>
+          <p class="eyebrow" id="player-round">Question</p>
+          <h2 id="player-score">0 pts</h2>
+          <div class="player-mode-stats">
+            <span id="player-mode">Classic</span>
+            <span id="player-coins">0 coins</span>
+          </div>
+        </div>
+        <div class="timer-circle" id="player-timer">30</div>
+      </header>
+      <section class="player-question-card">
+        <p id="player-category" class="eyebrow">Category</p>
+        <h1 id="player-question">Pick your answer</h1>
+      </section>
+      <section class="player-answers" id="player-answers"></section>
+      <p id="answer-status" class="status centered small"></p>
+    </section>
+
+    <section class="screen" id="answered-screen">
+      <div class="player-card waiting-card">
+        <div class="loader small-loader"></div>
+        <p class="eyebrow">Answer sent</p>
+        <h1>Waiting for everyone else…</h1>
+        <p id="answered-score">Score: 0</p>
+      </div>
+    </section>
+
+    <section class="screen" id="reveal-screen">
+      <div class="player-card result-card" id="player-result-card">
+        <div class="result-icon" id="player-result-icon">✓</div>
+        <p class="eyebrow" id="player-result-label">Correct</p>
+        <h1 id="player-gain">+0</h1>
+        <p id="player-correct-answer">Correct answer</p>
+        <p id="player-mode-event" class="mode-event-line"></p>
+        <p id="player-explanation" class="result-explanation">Explanation</p>
+        <div class="scoreboard-mini">
+          <span id="player-total-score">0 pts</span>
+          <span id="player-rank">Rank —</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="ended-screen">
+      <div class="player-card result-card">
+        <div class="trophy">🏆</div>
+        <p class="eyebrow">Game complete</p>
+        <h1 id="final-player-title">Nice work!</h1>
+        <div id="player-final-list" class="leaderboard-list"></div>
+        <a class="primary-btn" href="play.html">Join Another</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="common.js?v=20260630-avatarfix"></script>
+  <script type="module" src="play.js?v=20260630-avatarfix"></script>
+</body>
+</html>

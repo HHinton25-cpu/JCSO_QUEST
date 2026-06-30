@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Patrol Pals</title>
+  <desc>Original square cartoon law enforcement themed game character: Neighborhood Patrol.</desc>
+  
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="37" y="36" width="182" height="184" rx="34" fill="#2F6FDB" filter="url(#softShadow)" stroke="#111827" stroke-width="7"/>
+  <rect x="51" y="48" width="154" height="88" rx="26" fill="url(#shine)" opacity=".8"/>
+  <path d="M74 70 Q128 35 182 70 L176 92 Q128 80 80 92 Z" fill="#163E84" stroke="#111827" stroke-width="5" stroke-linejoin="round"/><path d="M91 79 Q128 65 165 79" fill="none" stroke="#FFD35C" stroke-width="7" stroke-linecap="round"/><path d="M170 85 q28 2 35 17 q-28 5-47-4" fill="#163E84" stroke="#111827" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="96" cy="108" r="10" fill="#1B1B1B"/><circle cx="160" cy="108" r="10" fill="#1B1B1B"/><circle cx="100" cy="104" r="3" fill="#fff"/><circle cx="164" cy="104" r="3" fill="#fff"/>
+  <path d="M108 128 q20 24 40 0" stroke="#1B1B1B" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M72 199 q56 27 112 0" fill="#163E84" opacity=".65"/>
+  <polygon points="128,132 135,148 153,149 139,160 144,178 128,168 112,178 117,160 103,149 121,148" fill="#FFD35C" stroke="#163E84" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="49" y="142" width="25" height="47" rx="7" fill="#163E84" stroke="#111827" stroke-width="4"/><path d="M55 137 l8-17" stroke="#111827" stroke-width="5" stroke-linecap="round"/><circle cx="62" cy="156" r="4" fill="#FFD35C"/><path d="M57 169 h10 M57 179 h10" stroke="#FFD35C" stroke-width="3" stroke-linecap="round"/>
+  <path d="M67 56 q34-18 73-12" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".22"/>
+</svg>

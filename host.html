@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Host JCSO Quest</title>
+  <meta name="description" content="Host screen for JCSO Quest, a Blooket-inspired live quiz experience using DOCJT question banks." />
+  <link rel="icon" href="favicon.ico?v=20260630-avatarfix" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-avatarfix" />
+  <meta name="theme-color" content="#062B72" />
+  <link rel="stylesheet" href="styles.css?v=20260630-avatarfix" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <main id="app" class="app-shell host-shell">
+    <section class="screen active" id="loading-screen">
+      <div class="hero-card compact">
+        <div class="brand-row">
+          <span class="brand-mark image-mark"><img src="jcso-quest-icon-icon-256.png?v=20260630-avatarfix" alt="" /></span>
+          <div>
+            <p class="eyebrow">Host Screen</p>
+            <h1>JCSO Quest</h1>
+          </div>
+        </div>
+        <div class="loader" aria-hidden="true"></div>
+        <p id="load-status" class="status">Loading…</p>
+        <p class="small muted">Loading the DOCJT question banks and preparing live Firebase rooms.</p>
+      </div>
+    </section>
+
+    <section class="screen" id="setup-screen">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <img class="topbar-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-avatarfix" alt="JCSO Quest" />
+          <div>
+            <p class="eyebrow">Host Console</p>
+            <h1>Host Quest Game</h1>
+          </div>
+        </div>
+        <div class="pill" id="bank-pill">0 questions</div>
+      </header>
+
+      <div id="firebase-warning" class="panel warning-panel hidden">
+        <h2>Firebase setup needed</h2>
+        <p>Open <code>firebase-config.js</code>, paste your Firebase web app config, enable Anonymous Auth, and add the Realtime Database rules from <code>firebase-rules.json</code>.</p>
+      </div>
+
+      <div class="setup-grid two-col">
+        <section class="panel hero-panel quest-panel">
+          <div class="hero-badge">Game-mode classroom quiz</div>
+          <h2>Pick a mode, launch a PIN, and let players compete with law-enforcement character avatars.</h2>
+          <p>This keeps your live question flow, but adds polished JCSO Quest branding, a Blooket-style lobby, avatar choice, game modes, coins, race distance, battle power, and richer results.</p>
+          <div class="stats-row" id="category-summary"></div>
+        </section>
+
+        <section class="panel controls-panel">
+          <h3>Game setup</h3>
+          <label for="question-set-select">Question set</label>
+          <select id="question-set-select"></select>
+
+          <label for="game-mode-select">Game mode</label>
+          <select id="game-mode-select"></select>
+          <div id="mode-preview" class="mode-preview"></div>
+
+          <label for="category-select">Category</label>
+          <select id="category-select"></select>
+
+          <label for="question-count">Questions</label>
+          <select id="question-count">
+            <option value="5">5 quick round</option>
+            <option value="10" selected>10 standard round</option>
+            <option value="15">15 challenge round</option>
+            <option value="25">25 marathon round</option>
+            <option value="75">75 exam-style round</option>
+            <option value="all">All loaded questions</option>
+          </select>
+
+          <label for="timer-select">Timer per question</label>
+          <select id="timer-select">
+            <option value="10">10 seconds</option>
+            <option value="20">20 seconds</option>
+            <option value="30" selected>30 seconds</option>
+            <option value="45">45 seconds</option>
+            <option value="60">60 seconds</option>
+          </select>
+
+          <div class="toggle-row">
+            <label class="switch-label" for="shuffle-toggle">Shuffle answers</label>
+            <input id="shuffle-toggle" type="checkbox" checked />
+          </div>
+
+          <button class="primary-btn jumbo" id="create-game" type="button" disabled>Create Game PIN</button>
+          <p id="setup-status" class="status small"></p>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="lobby-screen">
+      <header class="topbar lobby-topbar">
+        <div>
+          <p class="eyebrow">Game PIN</p>
+          <h1 id="pin-display" class="pin-display">000000</h1>
+          <div class="pill mode-pill" id="lobby-mode-pill">Mode</div>
+        </div>
+        <div class="lobby-actions">
+          <button class="ghost-btn" id="copy-link" type="button">Copy Join Link</button>
+          <button class="danger-btn" id="end-from-lobby" type="button">End Game</button>
+        </div>
+      </header>
+
+      <div class="lobby-grid">
+        <section class="panel join-panel">
+          <p class="eyebrow">Players go to</p>
+          <h2 id="join-url" class="join-url">play.html</h2>
+          <img id="join-qr" class="qr" alt="QR code for player join link" />
+          <p class="small muted">Players open the link, enter the PIN, choose a nickname, and pick an avatar.</p>
+        </section>
+        <section class="panel players-board">
+          <div class="panel-title-row">
+            <h2>Players</h2>
+            <span class="pill" id="player-count-pill">0 joined</span>
+          </div>
+          <div id="lobby-players" class="player-grid empty">Waiting for players…</div>
+          <button class="primary-btn jumbo" id="start-game" type="button">Start Game</button>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="question-screen">
+      <header class="game-topbar">
+        <div class="game-meta">
+          <span id="round-label">Question 1 / 10</span>
+          <span id="category-label">Category</span>
+        </div>
+        <div class="timer-wrap" aria-label="Timer">
+          <div id="timer-bar" class="timer-bar"></div>
+          <span id="timer-text">30</span>
+        </div>
+        <div class="answer-count" id="answer-count">0 answered</div>
+      </header>
+
+      <section class="question-card">
+        <div class="question-type" id="question-type">Recall</div>
+        <h2 id="question-text">Question text</h2>
+      </section>
+
+      <section class="mode-status-panel" id="mode-status-panel"></section>
+      <section class="answers-grid" id="answers-grid" aria-label="Answer choices"></section>
+
+      <footer class="game-footer">
+        <button class="danger-btn" id="end-from-question" type="button">End Game</button>
+        <button class="ghost-btn" id="reveal-now" type="button">Reveal Now</button>
+      </footer>
+    </section>
+
+    <section class="screen" id="reveal-screen">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Answer Reveal</p>
+          <h1 id="reveal-title">Correct Answer</h1>
+        </div>
+        <button class="primary-btn" id="next-question" type="button">Next Question</button>
+      </header>
+      <div class="reveal-grid">
+        <section class="panel answer-breakdown">
+          <h2 id="correct-answer-text">Answer</h2>
+          <p id="explanation-text">Explanation.</p>
+          <div id="mode-reveal-banner" class="mode-reveal-banner"></div>
+          <div id="answer-bars" class="answer-bars"></div>
+        </section>
+        <section class="panel leaderboard-panel compact-list">
+          <p class="eyebrow">Leaderboard</p>
+          <div id="leaderboard-list" class="leaderboard-list"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="ended-screen">
+      <div class="panel final-panel">
+        <div class="trophy">🏆</div>
+        <p class="eyebrow">Game complete</p>
+        <h1 id="winner-title">Winner</h1>
+        <div id="final-mode-summary" class="mode-reveal-banner"></div>
+        <div id="final-leaderboard" class="leaderboard-list"></div>
+        <div class="final-actions">
+          <button class="primary-btn" id="new-game" type="button">Host Another Game</button>
+          <a class="ghost-btn" href="index.html">Home</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="common.js?v=20260630-avatarfix"></script>
+  <script type="module" src="host.js?v=20260630-avatarfix"></script>
+</body>
+</html>

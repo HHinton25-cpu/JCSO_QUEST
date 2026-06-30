@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Forensics Finn</title>
+  <desc>Original square cartoon law enforcement themed game character: Evidence Lab.</desc>
+  
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="37" y="36" width="182" height="184" rx="34" fill="#63C7B2" filter="url(#softShadow)" stroke="#111827" stroke-width="7"/>
+  <rect x="51" y="48" width="154" height="88" rx="26" fill="url(#shine)" opacity=".8"/>
+  <path d="M72 80 q56-25 112 0 v20 q-56-16-112 0z" fill="#227C70" stroke="#111827" stroke-width="5"/><circle cx="105" cy="90" r="16" fill="#F3FBF9" opacity=".85" stroke="#111827" stroke-width="5"/><circle cx="151" cy="90" r="16" fill="#F3FBF9" opacity=".85" stroke="#111827" stroke-width="5"/><path d="M121 90 h14" stroke="#111827" stroke-width="5"/>
+  <circle cx="96" cy="108" r="11" fill="#1B1B1B"/><circle cx="160" cy="114" r="8" fill="#1B1B1B"/><circle cx="100" cy="104" r="3" fill="#fff"/><circle cx="163" cy="111" r="2.5" fill="#fff"/>
+  <path d="M108 128 q20 24 40 0" stroke="#1B1B1B" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M72 199 q56 27 112 0" fill="#227C70" opacity=".65"/>
+  <polygon points="128,137 145,147 145,167 128,177 111,167 111,147" fill="#F3FBF9" stroke="#227C70" stroke-width="4"/><circle cx="128" cy="157" r="6" fill="#227C70" opacity=".65"/>
+  <path d="M55 150 q12-24 28 0 q-3 25-14 38 q-11-13-14-38z" fill="none" stroke="#227C70" stroke-width="4"/><path d="M65 151 q4-10 8 0 q0 13-4 22 q-4-9-4-22z" fill="none" stroke="#227C70" stroke-width="3"/><circle cx="53" cy="187" r="4" fill="#F3FBF9"/><circle cx="85" cy="187" r="4" fill="#F3FBF9"/>
+  <path d="M67 56 q34-18 73-12" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".22"/>
+</svg>

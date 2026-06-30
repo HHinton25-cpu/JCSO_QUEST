@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "docjt_live_games": {
+      "$pin": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.child('hostUid').val() === auth.uid",
+        "updatedAt": {
+          ".write": "auth != null && auth.uid === data.parent().child('hostUid').val()"
+        },
+        "settings": {
+          ".write": "auth != null && auth.uid === data.parent().child('hostUid').val()"
+        },
+        "state": {
+          ".write": "auth != null && auth.uid === data.parent().child('hostUid').val()"
+        },
+        "question": {
+          ".write": "auth != null && auth.uid === data.parent().child('hostUid').val()"
+        },
+        "reveal": {
+          ".write": "auth != null && auth.uid === data.parent().child('hostUid').val()"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && ($uid === auth.uid || auth.uid === root.child('docjt_live_games').child($pin).child('hostUid').val())"
+          }
+        },
+        "answers": {
+          "$questionNumber": {
+            ".write": "auth != null && auth.uid === root.child('docjt_live_games').child($pin).child('hostUid').val()",
+            "$uid": {
+              ".write": "auth != null && ((auth.uid === $uid && !data.exists()) || auth.uid === root.child('docjt_live_games').child($pin).child('hostUid').val())"
+            }
+          }
+        }
+      }
+    }
+  }
+}

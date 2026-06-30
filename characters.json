@@ -1,0 +1,182 @@
+[
+  {
+    "id": "patrol_pals",
+    "name": "Patrol Pals",
+    "role": "Neighborhood Patrol",
+    "rarity": "common",
+    "rarityLevel": 1,
+    "asset": "./patrol_pals.svg",
+    "spriteSymbol": "char-patrol_pals",
+    "unlockCost": 100,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "neighborhood-patrol"
+    ]
+  },
+  {
+    "id": "detective_chip",
+    "name": "Detective Chip",
+    "role": "Clue Finder",
+    "rarity": "uncommon",
+    "rarityLevel": 2,
+    "asset": "./detective_chip.svg",
+    "spriteSymbol": "char-detective_chip",
+    "unlockCost": 200,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "clue-finder"
+    ]
+  },
+  {
+    "id": "k9_keeper",
+    "name": "K-9 Keeper",
+    "role": "Canine Partner",
+    "rarity": "rare",
+    "rarityLevel": 3,
+    "asset": "./k9_keeper.svg",
+    "spriteSymbol": "char-k9_keeper",
+    "unlockCost": 300,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "canine-partner"
+    ]
+  },
+  {
+    "id": "traffic_tango",
+    "name": "Traffic Tango",
+    "role": "Road Safety",
+    "rarity": "common",
+    "rarityLevel": 1,
+    "asset": "./traffic_tango.svg",
+    "spriteSymbol": "char-traffic_tango",
+    "unlockCost": 100,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "road-safety"
+    ]
+  },
+  {
+    "id": "forensics_finn",
+    "name": "Forensics Finn",
+    "role": "Evidence Lab",
+    "rarity": "epic",
+    "rarityLevel": 4,
+    "asset": "./forensics_finn.svg",
+    "spriteSymbol": "char-forensics_finn",
+    "unlockCost": 400,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "evidence-lab"
+    ]
+  },
+  {
+    "id": "sheriff_spark",
+    "name": "Sheriff Spark",
+    "role": "Town Guardian",
+    "rarity": "rare",
+    "rarityLevel": 3,
+    "asset": "./sheriff_spark.svg",
+    "spriteSymbol": "char-sheriff_spark",
+    "unlockCost": 300,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "town-guardian"
+    ]
+  },
+  {
+    "id": "dispatcher_dot",
+    "name": "Dispatcher Dot",
+    "role": "Command Center",
+    "rarity": "uncommon",
+    "rarityLevel": 2,
+    "asset": "./dispatcher_dot.svg",
+    "spriteSymbol": "char-dispatcher_dot",
+    "unlockCost": 200,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "command-center"
+    ]
+  },
+  {
+    "id": "park_ranger_rye",
+    "name": "Ranger Rye",
+    "role": "Park Safety",
+    "rarity": "uncommon",
+    "rarityLevel": 2,
+    "asset": "./park_ranger_rye.svg",
+    "spriteSymbol": "char-park_ranger_rye",
+    "unlockCost": 200,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "park-safety"
+    ]
+  },
+  {
+    "id": "court_captain",
+    "name": "Court Captain",
+    "role": "Court Security",
+    "rarity": "rare",
+    "rarityLevel": 3,
+    "asset": "./court_captain.svg",
+    "spriteSymbol": "char-court_captain",
+    "unlockCost": 300,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "court-security"
+    ]
+  },
+  {
+    "id": "marine_marshal",
+    "name": "Marine Marshal",
+    "role": "Harbor Patrol",
+    "rarity": "epic",
+    "rarityLevel": 4,
+    "asset": "./marine_marshal.svg",
+    "spriteSymbol": "char-marine_marshal",
+    "unlockCost": 400,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "harbor-patrol"
+    ]
+  },
+  {
+    "id": "mounted_milo",
+    "name": "Mounted Milo",
+    "role": "Event Patrol",
+    "rarity": "rare",
+    "rarityLevel": 3,
+    "asset": "./mounted_milo.svg",
+    "spriteSymbol": "char-mounted_milo",
+    "unlockCost": 300,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "event-patrol"
+    ]
+  },
+  {
+    "id": "rescue_rookie",
+    "name": "Rescue Rookie",
+    "role": "Search & Rescue",
+    "rarity": "legendary",
+    "rarityLevel": 5,
+    "asset": "./rescue_rookie.svg",
+    "spriteSymbol": "char-rescue_rookie",
+    "unlockCost": 500,
+    "tags": [
+      "law-enforcement",
+      "square-character",
+      "search-&-rescue"
+    ]
+  }
+]

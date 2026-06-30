@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title>Court Captain</title>
+  <desc>Original square cartoon law enforcement themed game character: Court Security.</desc>
+  
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="37" y="36" width="182" height="184" rx="34" fill="#565D68" filter="url(#softShadow)" stroke="#111827" stroke-width="7"/>
+  <rect x="51" y="48" width="154" height="88" rx="26" fill="url(#shine)" opacity=".8"/>
+  <path d="M74 70 Q128 35 182 70 L176 92 Q128 80 80 92 Z" fill="#23272F" stroke="#111827" stroke-width="5" stroke-linejoin="round"/><path d="M91 79 Q128 65 165 79" fill="none" stroke="#E3E8EF" stroke-width="7" stroke-linecap="round"/><path d="M170 85 q28 2 35 17 q-28 5-47-4" fill="#23272F" stroke="#111827" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M82 104 q13-8 26 0" stroke="#1B1B1B" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M148 104 q13-8 26 0" stroke="#1B1B1B" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="96" cy="112" r="8" fill="#1B1B1B"/><circle cx="160" cy="112" r="8" fill="#1B1B1B"/>
+  <path d="M112 128 h32" stroke="#1B1B1B" stroke-width="6" stroke-linecap="round"/>
+  <path d="M72 199 q56 27 112 0" fill="#23272F" opacity=".65"/>
+  <path d="M109 139 L147 139 L143 166 Q128 181 113 166 Z" fill="#E3E8EF" stroke="#23272F" stroke-width="4" stroke-linejoin="round"/><path d="M121 153 h14" stroke="#23272F" stroke-width="4" stroke-linecap="round"/>
+  <rect x="180" y="140" width="34" height="16" rx="5" fill="#E3E8EF" stroke="#111827" stroke-width="4" transform="rotate(-30 197 148)"/><rect x="168" y="158" width="58" height="11" rx="5" fill="#23272F" stroke="#111827" stroke-width="4" transform="rotate(-30 197 164)"/>
+  <path d="M67 56 q34-18 73-12" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".22"/>
+</svg>
