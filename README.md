@@ -21,3 +21,6 @@ Single-folder GitHub Pages build. Upload all files in this zip into the repo roo
 ## Upload note
 
 Keep the structure flat. Do not put files into folders.
+
+
+Update note: This build restores answer-position randomization for every selected question before a game PIN is created, so self-paced modes no longer show the correct answer in the first/triangle slot every time.

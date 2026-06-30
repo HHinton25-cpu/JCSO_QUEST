@@ -329,7 +329,19 @@ function selectQuestions(settings) {
   let pool = settings.category === 'all' ? [...bank] : bank.filter(q => q.category === settings.category);
   pool = LQ.shuffle(pool);
   const count = settings.requestedCount === 'all' ? pool.length : Math.min(Number(settings.requestedCount), pool.length);
-  return pool.slice(0, count);
+  const picked = pool.slice(0, count);
+  return settings.shuffleAnswers ? picked.map(randomizeQuestionChoices) : picked.map(q => ({ ...q, choices: [...(q.choices || [])] }));
+}
+
+function randomizeQuestionChoices(question) {
+  const choices = (question.choices || []).map((choice, originalIndex) => ({ choice, originalIndex }));
+  const shuffled = LQ.shuffle(choices);
+  const answer = shuffled.findIndex(item => Number(item.originalIndex) === Number(question.answer || 0));
+  return {
+    ...question,
+    choices: shuffled.map(item => item.choice),
+    answer: answer >= 0 ? answer : 0
+  };
 }
 
 function renderLobbyStatic() {
