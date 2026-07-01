@@ -29,6 +29,11 @@ let goldRushChosenChestIndex = -1;
 let goldRushLastTapAt = 0;
 let goldRushLastKnownGold = null;
 let goldRushNoticeTimer = null;
+let raceFlowQuestionKey = '';
+let raceFlowStage = 'question';
+let raceChosenRouteIndex = -1;
+let raceLastKnownDistance = null;
+let raceNoticeTimer = null;
 let rewardSubmitInProgress = false;
 
 const RACE_FINISH_DISTANCE = 500;
@@ -37,52 +42,52 @@ const POWER_BATTLE_INTRO_MS = 3000;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-gold-rush-stability-v2',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-gold-rush-stability-v2',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-gold-rush-stability-v2',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-gold-rush-stability-v2',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-gold-rush-stability-v2',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-gold-rush-stability-v2',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-gold-rush-stability-v2',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-gold-rush-stability-v2',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-gold-rush-stability-v2',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-gold-rush-stability-v2',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-gold-rush-stability-v2',
-  health1: 'jcso-health-1-md.png?v=20260630-gold-rush-stability-v2',
-  health2: 'jcso-health-2-md.png?v=20260630-gold-rush-stability-v2',
-  health3: 'jcso-health-3-md.png?v=20260630-gold-rush-stability-v2',
-  health4: 'jcso-health-4-md.png?v=20260630-gold-rush-stability-v2',
-  health5: 'jcso-health-5-md.png?v=20260630-gold-rush-stability-v2',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-gold-rush-stability-v2',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-gold-rush-stability-v2',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-gold-rush-stability-v2',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-gold-rush-stability-v2',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-gold-rush-stability-v2',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-gold-rush-stability-v2',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-gold-rush-stability-v2',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-gold-rush-stability-v2',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-gold-rush-stability-v2',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-gold-rush-stability-v2',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-gold-rush-stability-v2'
+  badge: 'jcso-battle-badge-md.png?v=20260630-cadet-race-qol-v1',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-cadet-race-qol-v1',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-cadet-race-qol-v1',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-cadet-race-qol-v1',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-cadet-race-qol-v1',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-cadet-race-qol-v1',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-cadet-race-qol-v1',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-cadet-race-qol-v1',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-cadet-race-qol-v1',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-cadet-race-qol-v1',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-cadet-race-qol-v1',
+  health1: 'jcso-health-1-md.png?v=20260630-cadet-race-qol-v1',
+  health2: 'jcso-health-2-md.png?v=20260630-cadet-race-qol-v1',
+  health3: 'jcso-health-3-md.png?v=20260630-cadet-race-qol-v1',
+  health4: 'jcso-health-4-md.png?v=20260630-cadet-race-qol-v1',
+  health5: 'jcso-health-5-md.png?v=20260630-cadet-race-qol-v1',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-cadet-race-qol-v1',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-cadet-race-qol-v1',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-cadet-race-qol-v1',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-cadet-race-qol-v1',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-cadet-race-qol-v1',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-cadet-race-qol-v1',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-cadet-race-qol-v1',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-cadet-race-qol-v1',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-cadet-race-qol-v1',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-cadet-race-qol-v1',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-cadet-race-qol-v1'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-gold-rush-stability-v2',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-gold-rush-stability-v2',
-  open: 'gold-rush-chest-open-md.png?v=20260630-gold-rush-stability-v2',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-gold-rush-stability-v2',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-gold-rush-stability-v2',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-gold-rush-stability-v2'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-cadet-race-qol-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-cadet-race-qol-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-cadet-race-qol-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-cadet-race-qol-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-cadet-race-qol-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-cadet-race-qol-v1'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-gold-rush-stability-v2',
-  car: 'jcso-race-car-md.png?v=20260630-gold-rush-stability-v2',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-gold-rush-stability-v2'
+  track: 'jcso-race-track-md.png?v=20260630-cadet-race-qol-v1',
+  car: 'jcso-race-car-md.png?v=20260630-cadet-race-qol-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-cadet-race-qol-v1'
 };
 
 const els = {};
@@ -606,6 +611,151 @@ function renderGoldRushChestOpening(questionIndex, choiceIndex, chestIndex) {
   `;
 }
 
+
+function setRaceStage(stage) {
+  const valid = stage || 'question';
+  document.body.classList.remove('race-stage-question', 'race-stage-route', 'race-stage-opening', 'race-stage-result', 'race-stage-leaderboard');
+  if (document.body.classList.contains('race-play')) {
+    document.body.classList.add(`race-stage-${valid}`);
+  }
+}
+
+function resetRaceFlow(questionKey) {
+  if (raceFlowQuestionKey !== questionKey) {
+    raceFlowQuestionKey = questionKey;
+    raceFlowStage = 'question';
+    raceChosenRouteIndex = -1;
+  }
+}
+
+function showRaceNotice(message, tone = '') {
+  if (!message || !document.body.classList.contains('race-play')) return;
+  let notice = document.getElementById('cadet-race-notice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.id = 'cadet-race-notice';
+    notice.className = 'cadet-race-notice';
+    document.body.appendChild(notice);
+  }
+  notice.className = `cadet-race-notice show ${tone || ''}`.trim();
+  notice.innerHTML = `<strong>Cadet Race update</strong><span>${LQ.escapeHtml(message)}</span>`;
+  if (raceNoticeTimer) clearTimeout(raceNoticeTimer);
+  raceNoticeTimer = setTimeout(() => notice.classList.remove('show'), 3600);
+}
+
+function watchRaceExternalChange(player, mode) {
+  if (mode.id !== 'cadet-race') return;
+  const currentDistance = Number(player.distance || 0);
+  if (raceLastKnownDistance === null) {
+    raceLastKnownDistance = currentDistance;
+    return;
+  }
+  const delta = currentDistance - raceLastKnownDistance;
+  raceLastKnownDistance = currentDistance;
+  if (!delta) return;
+  const busyWithOwnReward = Boolean(player.pendingRewardRequest || player.resultReady || raceFlowStage === 'opening' || raceFlowStage === 'result');
+  if (busyWithOwnReward) return;
+  const label = delta > 0
+    ? `You moved forward ${LQ.formatScore(delta)} ft.`
+    : `You moved back ${LQ.formatScore(Math.abs(delta))} ft.`;
+  showRaceNotice(player.lastModeLabel || label, delta < 0 ? 'danger' : 'gain');
+}
+
+function showRaceLeaderboard(game, player) {
+  if (!els.chestPanel) return;
+  setRaceStage('leaderboard');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const ranked = rankPlayersForMode(game.players || {}, 'cadet-race').slice(0, 8);
+  const myRank = ranked.findIndex(p => p.uid === uid) + 1;
+  const finish = RACE_FINISH_DISTANCE;
+  els.playerCategory.textContent = 'Cadet Race Leaderboard';
+  els.playerQuestion.textContent = myRank ? `You are #${myRank}` : 'Leaderboard';
+  els.chestPanel.innerHTML = `
+    <div class="race-screen-card race-leaderboard-screen">
+      <div class="race-screen-logo">${LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo')}</div>
+      ${assetImage(RACE_IMAGES.track, 'Cadet Race track', 'race-screen-track')}
+      <h2>Cadet Race Leaderboard</h2>
+      <p class="race-screen-help">Tap anywhere to continue to the next question.</p>
+      <div class="race-leaderboard-list">
+        ${ranked.map((p, i) => {
+          const distance = LQ.clamp(Number(p.distance || 0), 0, finish);
+          const percent = Math.round((distance / finish) * 100);
+          return `
+            <div class="race-leader-row ${p.uid === uid ? 'mine' : ''}">
+              <span class="race-rank">#${i + 1}</span>
+              ${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}
+              <strong>${LQ.escapeHtml(p.name || 'Player')}</strong>
+              <span>${LQ.formatScore(distance)} ft</span>
+              <div class="race-leader-track"><i style="width:${percent}%"></i><em style="left:${percent}%">🏎️</em></div>
+            </div>`;
+        }).join('') || '<p>No racers yet.</p>'}
+      </div>
+    </div>
+  `;
+  wireGoldRushDoubleTap(els.chestPanel.querySelector('.race-leaderboard-screen'), () => nextSelfPacedQuestion());
+  LQ.setStatus(els.answerStatus, 'Tap the leaderboard to continue.', '');
+}
+
+function renderRaceResultScreen(game, player) {
+  if (!els.chestPanel) return;
+  setRaceStage('result');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const correct = Boolean(player.lastCorrect);
+  const gain = formatPlayerGain(player, 'cadet-race');
+  const rewardArt = resultArtForMode(correct, 'cadet-race', player);
+  els.playerCategory.textContent = correct ? 'Route result' : 'No movement';
+  els.playerQuestion.textContent = correct ? gain.label : 'Incorrect answer';
+  els.chestPanel.innerHTML = `
+    <div class="race-screen-card race-result-screen">
+      <div class="race-screen-logo">${LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo')}</div>
+      <div class="race-result-art">${rewardArt}</div>
+      <h2>${LQ.escapeHtml(correct ? gain.label : 'No movement this question')}</h2>
+      <p class="race-result-label">${LQ.escapeHtml(formatRevealModeEvent(player, 'cadet-race'))}</p>
+      <div class="race-answer-box">
+        <strong>Correct answer:</strong>
+        <span>${LQ.escapeHtml(player.lastCorrectAnswer || '')}</span>
+      </div>
+      ${player.lastExplanation ? `<p class="race-explanation">${LQ.escapeHtml(player.lastExplanation)}</p>` : ''}
+      <p class="race-screen-help">Tap to show the leaderboard.</p>
+    </div>
+  `;
+  wireGoldRushDoubleTap(els.chestPanel.querySelector('.race-result-screen'), () => {
+    raceFlowStage = 'leaderboard';
+    showRaceLeaderboard(game, player);
+  });
+  LQ.setStatus(els.answerStatus, 'Tap the result to show the leaderboard.', correct ? 'ok' : '');
+}
+
+function renderRaceRouteOpening(questionIndex, choiceIndex, routeIndex) {
+  if (!els.chestPanel) return;
+  setRaceStage('opening');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const routes = [
+    { title: 'Patrol Route', img: RACE_IMAGES.track, alt: 'Race track route' },
+    { title: 'Siren Sprint', img: RACE_IMAGES.car, alt: 'Race car route' },
+    { title: 'Unit Move', img: RACE_IMAGES.patrol, alt: 'Patrol unit route' }
+  ];
+  const route = routes[routeIndex % routes.length];
+  els.chestPanel.innerHTML = `
+    <div class="race-screen-card race-opening-screen">
+      <div class="race-screen-logo">${LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo')}</div>
+      <p class="eyebrow">Route selected</p>
+      <div class="race-opening-focus">
+        ${assetImage(route.img, route.alt, 'race-opening-route')}
+        ${assetImage(RACE_IMAGES.car, 'Cadet Race car', 'race-opening-car')}
+      </div>
+      <h2>${LQ.escapeHtml(route.title)}</h2>
+      <p>Checking your route result…</p>
+    </div>
+  `;
+}
+
 function renderSelfPacedPlay(game) {
   cleanupTimer();
   const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
@@ -624,6 +774,7 @@ function renderSelfPacedPlay(game) {
   const q = questionBank[qIndex];
   const questionKey = `${qIndex}_${q.id || q.question}`;
   if (mode.id === 'coin-rush') resetGoldRushFlow(questionKey);
+  if (mode.id === 'cadet-race') resetRaceFlow(questionKey);
   const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || (mode.id === 'coin-rush' ? 10000 : 500));
   const renderKey = [
     mode.id,
@@ -632,15 +783,16 @@ function renderSelfPacedPlay(game) {
     me.pendingRewardRequest?.requestId || '',
     me.targetPickRequest?.requestId || '',
     me.resultReady ? 'result' : 'question',
-    mode.id === 'coin-rush' ? 'gold-stable' : (me.coins || 0),
-    mode.id === 'coin-rush' ? 'gold-stable' : (me.distance || 0),
-    mode.id === 'coin-rush' ? 'gold-stable' : (me.lastModeLabel || ''),
+    mode.id === 'coin-rush' ? 'gold-stable' : mode.id === 'cadet-race' ? 'race-stable' : (me.coins || 0),
+    mode.id === 'coin-rush' ? 'gold-stable' : mode.id === 'cadet-race' ? 'race-stable' : (me.distance || 0),
+    mode.id === 'coin-rush' ? 'gold-stable' : mode.id === 'cadet-race' ? 'race-stable' : (me.lastModeLabel || ''),
     localChestQuestionKey,
     localChestChoiceIndex,
-    mode.id === 'coin-rush' ? goldRushFlowStage : '',
-    mode.id === 'coin-rush' ? goldRushChosenChestIndex : -1
+    mode.id === 'coin-rush' ? goldRushFlowStage : mode.id === 'cadet-race' ? raceFlowStage : '',
+    mode.id === 'coin-rush' ? goldRushChosenChestIndex : mode.id === 'cadet-race' ? raceChosenRouteIndex : -1
   ].join('|');
   watchGoldRushExternalChange(me, mode);
+  watchRaceExternalChange(me, mode);
   const onlyOtherPlayersChanged = renderKey === lastSelfPacedRenderKey;
   if (onlyOtherPlayersChanged) {
     updateSelfPacedTopbar(me, mode, goal);
@@ -657,9 +809,11 @@ function renderSelfPacedPlay(game) {
   els.chestPanel?.classList.add('hidden');
   if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
   if (mode.id === 'coin-rush') setGoldRushStage('question');
+  if (mode.id === 'cadet-race') setRaceStage('question');
 
   if (me.pendingRewardRequest) {
     if (mode.id === 'coin-rush') setGoldRushStage('opening');
+    if (mode.id === 'cadet-race') setRaceStage('opening');
     renderOpeningReward(mode.id);
     LQ.showScreen('question');
     return;
@@ -679,6 +833,12 @@ function renderSelfPacedPlay(game) {
         goldRushFlowStage = 'result';
         renderGoldRushResultScreen(game, me);
       }
+    } else if (mode.id === 'cadet-race') {
+      if (raceFlowStage === 'leaderboard') showRaceLeaderboard(game, me);
+      else {
+        raceFlowStage = 'result';
+        renderRaceResultScreen(game, me);
+      }
     } else {
       renderSelfPacedResult(me, mode.id);
     }
@@ -690,6 +850,10 @@ function renderSelfPacedPlay(game) {
     if (mode.id === 'coin-rush') {
       goldRushFlowStage = 'chest';
       setGoldRushStage('chest');
+    }
+    if (mode.id === 'cadet-race') {
+      raceFlowStage = 'route';
+      setRaceStage('route');
     }
     renderChestChoices(mode.id, qIndex, localChestChoiceIndex);
     LQ.showScreen('question');
@@ -705,7 +869,7 @@ function renderSelfPacedPlay(game) {
   document.querySelectorAll('[data-choice-index]').forEach(button => {
     button.addEventListener('click', () => submitSelfPacedAnswer(Number(button.dataset.choiceIndex)));
   });
-  LQ.setStatus(els.answerStatus, mode.id === 'coin-rush' ? 'Answer correctly to unlock the chest screen.' : 'Answer correctly to unlock three mystery rewards. No question timer.', '');
+  LQ.setStatus(els.answerStatus, mode.id === 'coin-rush' ? 'Answer correctly to unlock the chest screen.' : mode.id === 'cadet-race' ? 'Answer correctly to unlock the route screen.' : 'Answer correctly to unlock three mystery rewards. No question timer.', '');
   LQ.showScreen('question');
 }
 
@@ -778,6 +942,10 @@ async function submitSelfPacedAnswer(choiceIndex) {
       goldRushFlowStage = 'chest';
       setGoldRushStage('chest');
     }
+    if ((game.settings?.gameMode || 'coin-rush') === 'cadet-race') {
+      raceFlowStage = 'route';
+      setRaceStage('route');
+    }
     renderChestChoices(game.settings?.gameMode || 'coin-rush', qIndex, choiceIndex);
     LQ.setStatus(els.answerStatus, 'Correct — pick one reward chest.', 'ok');
     return;
@@ -810,10 +978,11 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
   els.chestPanel.classList.remove('hidden');
   const title = modeId === 'cadet-race' ? 'Choose a route card' : modeId === 'power-battle' ? 'Choose a tactical crate' : 'Choose a Gold Rush chest';
   if (modeId === 'coin-rush') setGoldRushStage('chest');
+  if (modeId === 'cadet-race') setRaceStage('route');
   const subtitle = modeId === 'coin-rush'
     ? 'Pick one mystery chest.'
     : modeId === 'cadet-race'
-      ? 'Pick one of the three route cards. It can move you forward, boost you, swap positions, or slow you down.'
+      ? 'Pick one route card.'
       : 'Pick one of the three tactical crates. It can add power, shield you, heal you, steal power, or overload.';
   els.chestPanel.innerHTML = `
     <div class="chest-intro ${modeId === 'coin-rush' ? 'gold-rush-chest-intro' : modeId === 'cadet-race' ? 'race-card-intro' : ''}">
@@ -823,6 +992,7 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
       <h2>${LQ.escapeHtml(title)}</h2>
       <p>${LQ.escapeHtml(subtitle)}</p>
       ${modeId === 'coin-rush' ? '<p class="gold-screen-help">Tap one chest. The others will disappear.</p>' : ''}
+      ${modeId === 'cadet-race' ? '<p class="race-screen-help">Tap one route. The others will disappear.</p>' : ''}
     </div>
     <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : modeId === 'cadet-race' ? 'race-route-grid' : ''}">
       ${[0, 1, 2].map(i => renderRewardChoiceButton(modeId, questionIndex, choiceIndex, i)).join('')}
@@ -976,7 +1146,7 @@ function reactionSort(a, b) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-gold-rush-stability-v2`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-cadet-race-qol-v1`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -1114,17 +1284,19 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
   goldRushFlowStage = 'question';
   goldRushChosenChestIndex = -1;
   goldRushLastTapAt = 0;
-  goldRushChosenChestIndex = chestIndex;
+  raceFlowStage = 'question';
+  raceChosenRouteIndex = -1;
   const modeId = liveGame.settings?.gameMode || 'coin-rush';
   if (modeId === 'coin-rush') {
+    goldRushChosenChestIndex = chestIndex;
     goldRushFlowStage = 'opening';
     renderGoldRushChestOpening(questionIndex, choiceIndex, chestIndex);
+  } else if (modeId === 'cadet-race') {
+    raceChosenRouteIndex = chestIndex;
+    raceFlowStage = 'opening';
+    renderRaceRouteOpening(questionIndex, choiceIndex, chestIndex);
   } else if (els.chestPanel) {
-    const openingClass = modeId === 'cadet-race' ? 'race-opening' : '';
-    const openingLogo = modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : '';
-    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : '<div class="loader small-loader"></div>';
-    const openingText = modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Resolving your reward.';
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${openingClass}">${openingLogo}${openingArt}<h2>Opening reward…</h2><p>${openingText}</p></div>`;
+    els.chestPanel.innerHTML = '<div class="loader small-loader"></div>';
   }
   try {
     await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
@@ -1157,10 +1329,14 @@ function renderOpeningReward(modeId) {
       LQ.setStatus(els.answerStatus, 'Opening reward…', '');
       return;
     }
-    const art = modeId === 'cadet-race'
-      ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img')
-      : '<div class="loader small-loader"></div>';
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'cadet-race' ? 'race-opening' : ''}">${modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Your game reward is being resolved.'}</p></div>`;
+    if (modeId === 'cadet-race') {
+      const chosen = raceChosenRouteIndex >= 0 ? raceChosenRouteIndex : 0;
+      renderRaceRouteOpening(0, 0, chosen);
+      LQ.setStatus(els.answerStatus, 'Checking route…', '');
+      return;
+    }
+    const art = '<div class="loader small-loader"></div>';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art">${art}<h2>Opening reward…</h2><p>Your game reward is being resolved.</p></div>`;
   }
   LQ.setStatus(els.answerStatus, 'Opening reward…', '');
 }
@@ -1168,6 +1344,10 @@ function renderOpeningReward(modeId) {
 function renderSelfPacedResult(player, modeId) {
   if (modeId === 'coin-rush' && liveGame) {
     renderGoldRushResultScreen(liveGame, player);
+    return;
+  }
+  if (modeId === 'cadet-race' && liveGame) {
+    renderRaceResultScreen(liveGame, player);
     return;
   }
   els.playerAnswers.innerHTML = '';
@@ -1203,6 +1383,9 @@ async function nextSelfPacedQuestion() {
   goldRushChosenChestIndex = -1;
   goldRushLastTapAt = 0;
   goldRushLastKnownGold = null;
+  raceFlowStage = 'question';
+  raceChosenRouteIndex = -1;
+  raceLastKnownDistance = null;
   await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
     selfQuestionIndex: nextIndex,
     resultReady: false,

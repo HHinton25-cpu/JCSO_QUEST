@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-gold-rush-stability-v2';
+  const APP_VERSION = '20260630-cadet-race-qol-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',

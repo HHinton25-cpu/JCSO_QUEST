@@ -60,3 +60,14 @@ Players double-tap the reward result to show the leaderboard, then double-tap th
 - Steal chests open a dedicated target-selection screen.
 - Gold changes from other players no longer force full screen re-renders.
 - If someone steals from you or your gold changes, a small notification popup appears instead of jumping the screen.
+
+
+## Cadet Race QOL / stability update
+Cadet Race now mirrors the Gold Rush separated-screen flow:
+- question-only screen while answering
+- route-card-only screen after a correct answer
+- selected route opening animation
+- result screen with correct answer/explanation
+- leaderboard screen with race progress
+- tap to continue from result to leaderboard and leaderboard to next question
+Distance-only updates no longer force full player-screen rebuilds, reducing flashing. External distance changes show a popup instead.
