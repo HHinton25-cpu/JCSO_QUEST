@@ -27,55 +27,56 @@ let rewardSubmitInProgress = false;
 
 const RACE_FINISH_DISTANCE = 500;
 const BATTLE_START_HEALTH = 5;
+const POWER_BATTLE_INTRO_MS = 3000;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-native-ui-v1',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-native-ui-v1',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-native-ui-v1',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-native-ui-v1',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-native-ui-v1',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-native-ui-v1',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-native-ui-v1',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-native-ui-v1',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-native-ui-v1',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-native-ui-v1',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-native-ui-v1',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-native-ui-v1',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-native-ui-v1',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-native-ui-v1',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-native-ui-v1',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-native-ui-v1',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-native-ui-v1',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-native-ui-v1',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-native-ui-v1',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-native-ui-v1',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-native-ui-v1',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-native-ui-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v1',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v1',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v1',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v1',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v1',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v1',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v1',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v1',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v1',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v1',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v1',
+  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v1',
+  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v1',
+  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v1',
+  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v1',
+  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v1',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v1',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v1',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v1',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v1',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v1',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v1'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-native-ui-v1',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-native-ui-v1',
-  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-native-ui-v1',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-native-ui-v1',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-native-ui-v1',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-native-ui-v1'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-autoflow-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-autoflow-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-autoflow-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-autoflow-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-autoflow-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-autoflow-v1'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-native-ui-v1',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-native-ui-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-native-ui-v1'
+  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v1',
+  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v1'
 };
 
 const els = {};
@@ -322,7 +323,12 @@ function renderQuestion(game) {
   }
 
   if (answered) {
-    if (mode.id === 'power-battle') renderBattleMatchupPanel(game, me, true);
+    if (mode.id === 'power-battle') {
+      renderBattleMatchupPanel(game, me, true);
+      if (els.chestPanel) els.chestPanel.dataset.battlePhase = 'waiting';
+      document.body.classList.remove('battle-intro');
+      document.body.classList.add('battle-live');
+    }
     LQ.showScreen('answered');
     cleanupTimer();
     return;
@@ -339,7 +345,14 @@ function renderQuestion(game) {
   });
   if (mode.id === 'power-battle') {
     document.body.classList.add('battle-play');
+    const openingCountdownMs = Math.max(0, POWER_BATTLE_INTRO_MS - (Date.now() - Number(game.state?.startedAt || Date.now())));
     renderBattleMatchupPanel(game, me, false);
+    if (els.chestPanel) {
+      els.chestPanel.dataset.battlePhase = 'intro';
+      els.chestPanel.classList.toggle('hidden', openingCountdownMs <= 0);
+    }
+    document.body.classList.toggle('battle-intro', openingCountdownMs > 0);
+    document.body.classList.toggle('battle-live', openingCountdownMs <= 0);
     const opponentUid = q.battlePairs?.[uid] || '';
     const opponent = opponentUid ? game.players?.[opponentUid] : null;
     const opponentName = opponent?.name || 'a bye round';
@@ -361,13 +374,27 @@ function startTimer(endsAt) {
     const now = Date.now();
     const remainingMs = Math.max(0, endsAt - now);
     const seconds = Math.ceil(remainingMs / 1000);
-    const openingCountdownMs = document.body.classList.contains('battle-play') ? Math.max(0, 3000 - (now - startedAt)) : 0;
+    const isPowerBattle = document.body.classList.contains('battle-play');
+    const openingCountdownMs = isPowerBattle ? Math.max(0, POWER_BATTLE_INTRO_MS - (now - startedAt)) : 0;
     const answerButtons = Array.from(document.querySelectorAll('[data-choice-index]'));
-    if (document.body.classList.contains('battle-play') && openingCountdownMs > 0) {
+    if (isPowerBattle && openingCountdownMs > 0) {
       const count = Math.max(1, Math.ceil(openingCountdownMs / 1000));
-      els.playerTimer.innerHTML = `<img class="battle-countdown-img" src="${battleCountdownAsset(count)}" alt="${count}" />`;
+      document.body.classList.add('battle-intro');
+      document.body.classList.remove('battle-live');
+      if (els.chestPanel) {
+        els.chestPanel.classList.remove('hidden');
+        els.chestPanel.dataset.battlePhase = 'intro';
+      }
+      els.playerTimer.innerHTML = `<span class="pb-countdown-number">${count}</span>`;
       answerButtons.forEach(btn => { btn.disabled = true; btn.classList.add('countdown-locked'); });
     } else {
+      if (isPowerBattle) {
+        document.body.classList.remove('battle-intro');
+        document.body.classList.add('battle-live');
+        if (els.chestPanel?.dataset?.battlePhase === 'intro' && !localAnswered) {
+          els.chestPanel.classList.add('hidden');
+        }
+      }
       els.playerTimer.textContent = seconds;
       answerButtons.forEach(btn => { if (!localAnswered) btn.disabled = false; btn.classList.remove('countdown-locked'); });
     }
@@ -770,7 +797,7 @@ function reactionSort(a, b) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-native-ui-v1`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-autoflow-v1`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -995,7 +1022,7 @@ function renderReveal(game) {
   } else {
     els.playerResultIcon.textContent = resultIconForMode(correct, mode.id, me);
   }
-  els.playerResultLabel.textContent = resultLabelForMode(correct, mode.id, me);
+  els.playerResultLabel.textContent = mode.id === 'power-battle' ? 'Power Battle result' : resultLabelForMode(correct, mode.id, me);
   els.playerCorrectAnswer.textContent = `Correct answer: ${reveal.correctAnswer || ''}`;
   if (els.playerModeEvent) els.playerModeEvent.textContent = formatRevealModeEvent(me, mode.id);
   if (els.playerExplanation) els.playerExplanation.textContent = reveal.explanation || '';

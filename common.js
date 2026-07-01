@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-power-battle-native-ui-v1';
+  const APP_VERSION = '20260630-power-battle-autoflow-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',

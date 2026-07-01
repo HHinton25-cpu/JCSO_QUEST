@@ -35,3 +35,7 @@ This build keeps the Power Battle redesign but compresses the large artwork to W
 
 ## Power Battle native UI fix
 This build removes the large proof/mockup images from live Power Battle gameplay. Power Battle now uses responsive native HTML/CSS components for matchup, countdown/question, waiting, reveal, host board, and final results. The proof images are no longer rendered as page content.
+
+
+## Power Battle automatic flow update
+Power Battle now uses a separate matchup/countdown screen before the question appears, reveals the question after the countdown, automatically resolves once active players answer or time expires, shows results for 10 seconds, then automatically launches the next randomized matchup. The host screen is display-only for matchups, standings, and final podium.
