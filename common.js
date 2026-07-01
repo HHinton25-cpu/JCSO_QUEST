@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '20260630-power-battle-autoflow-v2';
+  const APP_VERSION = '20260630-gold-rush-separated-v1';
   const DEFAULT_QUESTION_SOURCES = [
     './questions.js',
     'https://hhinton25-cpu.github.io/DOCJT_EXAM/questions.js?v=75',

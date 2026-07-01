@@ -43,3 +43,13 @@ Power Battle now uses a separate matchup/countdown screen before the question ap
 
 ## Power Battle auto-flow v2
 Fixes readability, restores a safer host display board, and corrects the automatic reveal/next-question flow using the actual Firebase `state.phase` and `answers/questionIndex` paths.
+
+
+## Gold Rush separated screen flow
+Gold Rush player UI now uses separate screens/phases to avoid overcrowding and scroll-jump glitches:
+- question-only screen with just the question and answer choices
+- chest-only screen after a correct answer
+- selected chest opening animation where the chosen chest takes focus
+- reward result screen
+- leaderboard screen
+Players double-tap the reward result to show the leaderboard, then double-tap the leaderboard to continue to the next question.

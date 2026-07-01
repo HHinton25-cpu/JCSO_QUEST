@@ -23,6 +23,10 @@ let lastGainAnimationKey = '';
 let lastEndedAudioKey = '';
 let localChestQuestionKey = '';
 let localChestChoiceIndex = -1;
+let goldRushFlowQuestionKey = '';
+let goldRushFlowStage = 'question';
+let goldRushChosenChestIndex = -1;
+let goldRushLastTapAt = 0;
 let rewardSubmitInProgress = false;
 
 const RACE_FINISH_DISTANCE = 500;
@@ -31,52 +35,52 @@ const POWER_BATTLE_INTRO_MS = 3000;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v2',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v2',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v2',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v2',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v2',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v2',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v2',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v2',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v2',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v2',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v2',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v2',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v2',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v2',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v2',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v2',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v2',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v2',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v2',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v2',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v2',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v2'
+  badge: 'jcso-battle-badge-md.png?v=20260630-gold-rush-separated-v1',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-gold-rush-separated-v1',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-gold-rush-separated-v1',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-gold-rush-separated-v1',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-gold-rush-separated-v1',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-gold-rush-separated-v1',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-gold-rush-separated-v1',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-gold-rush-separated-v1',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-gold-rush-separated-v1',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-gold-rush-separated-v1',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-gold-rush-separated-v1',
+  health1: 'jcso-health-1-md.png?v=20260630-gold-rush-separated-v1',
+  health2: 'jcso-health-2-md.png?v=20260630-gold-rush-separated-v1',
+  health3: 'jcso-health-3-md.png?v=20260630-gold-rush-separated-v1',
+  health4: 'jcso-health-4-md.png?v=20260630-gold-rush-separated-v1',
+  health5: 'jcso-health-5-md.png?v=20260630-gold-rush-separated-v1',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-gold-rush-separated-v1',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-gold-rush-separated-v1',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-gold-rush-separated-v1',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-gold-rush-separated-v1',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-gold-rush-separated-v1',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-gold-rush-separated-v1',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-gold-rush-separated-v1',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-gold-rush-separated-v1',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-gold-rush-separated-v1',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-gold-rush-separated-v1',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-gold-rush-separated-v1'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-autoflow-v2',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-autoflow-v2',
-  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-autoflow-v2',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-autoflow-v2',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-autoflow-v2',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-autoflow-v2'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-gold-rush-separated-v1',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-gold-rush-separated-v1',
+  open: 'gold-rush-chest-open-md.png?v=20260630-gold-rush-separated-v1',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-gold-rush-separated-v1',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-gold-rush-separated-v1',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-gold-rush-separated-v1'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v2',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v2',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v2'
+  track: 'jcso-race-track-md.png?v=20260630-gold-rush-separated-v1',
+  car: 'jcso-race-car-md.png?v=20260630-gold-rush-separated-v1',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-gold-rush-separated-v1'
 };
 
 const els = {};
@@ -452,6 +456,124 @@ function getMyAnswer(game) {
   return game.answers?.[index]?.[uid] || null;
 }
 
+
+function setGoldRushStage(stage) {
+  const valid = stage || 'question';
+  document.body.classList.remove('gold-stage-question', 'gold-stage-chest', 'gold-stage-opening', 'gold-stage-result', 'gold-stage-leaderboard');
+  if (document.body.classList.contains('gold-rush-play')) {
+    document.body.classList.add(`gold-stage-${valid}`);
+  }
+}
+
+function resetGoldRushFlow(questionKey) {
+  if (goldRushFlowQuestionKey !== questionKey) {
+    goldRushFlowQuestionKey = questionKey;
+    goldRushFlowStage = 'question';
+    goldRushChosenChestIndex = -1;
+    goldRushLastTapAt = 0;
+  }
+}
+
+function wireGoldRushDoubleTap(element, handler) {
+  if (!element) return;
+  const onTap = event => {
+    const now = Date.now();
+    if (now - goldRushLastTapAt <= 420) {
+      goldRushLastTapAt = 0;
+      event.preventDefault();
+      handler();
+      return;
+    }
+    goldRushLastTapAt = now;
+  };
+  element.addEventListener('click', onTap);
+  element.addEventListener('touchend', onTap, { passive: false });
+}
+
+function showGoldRushLeaderboard(game, player) {
+  if (!els.chestPanel) return;
+  setGoldRushStage('leaderboard');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const ranked = rankPlayersForMode(game.players || {}, 'coin-rush').slice(0, 8);
+  const myRank = ranked.findIndex(p => p.uid === uid) + 1;
+  els.playerCategory.textContent = 'Gold Rush Leaderboard';
+  els.playerQuestion.textContent = myRank ? `You are #${myRank}` : 'Leaderboard';
+  els.chestPanel.innerHTML = `
+    <div class="gold-screen-card gold-leaderboard-screen">
+      <div class="gold-screen-logo">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>
+      <h2>Gold Rush Leaderboard</h2>
+      <p class="gold-screen-help">Double-tap anywhere to continue to the next question.</p>
+      <div class="gold-rush-leaderboard-list">
+        ${ranked.map((p, i) => `
+          <div class="gold-rush-leader-row ${p.uid === uid ? 'mine' : ''}">
+            <span class="gold-rank">#${i + 1}</span>
+            ${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')}
+            <strong>${LQ.escapeHtml(p.name || 'Player')}</strong>
+            <span>${LQ.formatScore(p.coins || 0)} gold</span>
+          </div>
+        `).join('') || '<p>No players yet.</p>'}
+      </div>
+    </div>
+  `;
+  wireGoldRushDoubleTap(els.chestPanel.querySelector('.gold-leaderboard-screen'), () => nextSelfPacedQuestion());
+  LQ.setStatus(els.answerStatus, 'Double-tap the leaderboard to continue.', '');
+}
+
+function renderGoldRushResultScreen(game, player) {
+  if (!els.chestPanel) return;
+  setGoldRushStage('result');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const correct = Boolean(player.lastCorrect);
+  const gain = formatPlayerGain(player, 'coin-rush');
+  const rewardArt = resultArtForMode(correct, 'coin-rush', player);
+  els.playerCategory.textContent = correct ? 'Chest opened' : 'No chest earned';
+  els.playerQuestion.textContent = correct ? gain.label : 'Incorrect answer';
+  els.chestPanel.innerHTML = `
+    <div class="gold-screen-card gold-result-screen">
+      <div class="gold-screen-logo">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>
+      <div class="gold-result-art">${rewardArt}</div>
+      <h2>${LQ.escapeHtml(correct ? gain.label : 'No reward this question')}</h2>
+      <p class="gold-result-label">${LQ.escapeHtml(formatRevealModeEvent(player, 'coin-rush'))}</p>
+      <div class="gold-answer-box">
+        <strong>Correct answer:</strong>
+        <span>${LQ.escapeHtml(player.lastCorrectAnswer || '')}</span>
+      </div>
+      ${player.lastExplanation ? `<p class="gold-explanation">${LQ.escapeHtml(player.lastExplanation)}</p>` : ''}
+      <p class="gold-screen-help">Double-tap to show the leaderboard.</p>
+    </div>
+  `;
+  wireGoldRushDoubleTap(els.chestPanel.querySelector('.gold-result-screen'), () => {
+    goldRushFlowStage = 'leaderboard';
+    showGoldRushLeaderboard(game, player);
+  });
+  LQ.setStatus(els.answerStatus, 'Double-tap the result to show the leaderboard.', correct ? 'ok' : '');
+}
+
+function renderGoldRushChestOpening(questionIndex, choiceIndex, chestIndex) {
+  if (!els.chestPanel) return;
+  setGoldRushStage('opening');
+  els.playerAnswers.innerHTML = '';
+  els.chestPanel.classList.remove('hidden');
+  if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  const chosenImage = coinRushChestImage(questionIndex, choiceIndex, chestIndex);
+  els.chestPanel.innerHTML = `
+    <div class="gold-screen-card gold-opening-screen">
+      <div class="gold-screen-logo">${LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo')}</div>
+      <p class="eyebrow">Chest selected</p>
+      <div class="gold-opening-focus">
+        ${assetImage(chosenImage, 'Selected Gold Rush chest', 'gold-opening-before')}
+        ${assetImage(GOLD_RUSH_IMAGES.open, 'Opened Gold Rush chest', 'gold-opening-after')}
+      </div>
+      <h2>Opening Chest ${chestIndex + 1}…</h2>
+      <p>Revealing your reward.</p>
+    </div>
+  `;
+}
+
 function renderSelfPacedPlay(game) {
   cleanupTimer();
   const mode = LQ.getGameMode(game.settings?.gameMode || 'coin-rush');
@@ -469,6 +591,7 @@ function renderSelfPacedPlay(game) {
   const qIndex = Number(me.selfQuestionIndex || 0) % questionBank.length;
   const q = questionBank[qIndex];
   const questionKey = `${qIndex}_${q.id || q.question}`;
+  if (mode.id === 'coin-rush') resetGoldRushFlow(questionKey);
   const goal = Number(game.state?.goalLimit || game.settings?.goalLimit || (mode.id === 'coin-rush' ? 10000 : 500));
   const renderKey = [
     mode.id,
@@ -481,7 +604,9 @@ function renderSelfPacedPlay(game) {
     me.distance || 0,
     me.lastModeLabel || '',
     localChestQuestionKey,
-    localChestChoiceIndex
+    localChestChoiceIndex,
+    mode.id === 'coin-rush' ? goldRushFlowStage : '',
+    mode.id === 'coin-rush' ? goldRushChosenChestIndex : -1
   ].join('|');
   const onlyOtherPlayersChanged = renderKey === lastSelfPacedRenderKey;
   if (onlyOtherPlayersChanged) {
@@ -498,26 +623,41 @@ function renderSelfPacedPlay(game) {
   els.playerAnswers.innerHTML = '';
   els.chestPanel?.classList.add('hidden');
   if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  if (mode.id === 'coin-rush') setGoldRushStage('question');
 
   if (me.pendingRewardRequest) {
+    if (mode.id === 'coin-rush') setGoldRushStage('opening');
     renderOpeningReward(mode.id);
     LQ.showScreen('question');
     return;
   }
 
   if (me.targetPickRequest) {
+    if (mode.id === 'coin-rush') setGoldRushStage('chest');
     renderGoldStealTargetPicker(game, me.targetPickRequest);
     LQ.showScreen('question');
     return;
   }
 
   if (me.resultReady) {
-    renderSelfPacedResult(me, mode.id);
+    if (mode.id === 'coin-rush') {
+      if (goldRushFlowStage === 'leaderboard') showGoldRushLeaderboard(game, me);
+      else {
+        goldRushFlowStage = 'result';
+        renderGoldRushResultScreen(game, me);
+      }
+    } else {
+      renderSelfPacedResult(me, mode.id);
+    }
     LQ.showScreen('question');
     return;
   }
 
   if (localChestQuestionKey === questionKey && localChestChoiceIndex >= 0) {
+    if (mode.id === 'coin-rush') {
+      goldRushFlowStage = 'chest';
+      setGoldRushStage('chest');
+    }
     renderChestChoices(mode.id, qIndex, localChestChoiceIndex);
     LQ.showScreen('question');
     return;
@@ -532,7 +672,7 @@ function renderSelfPacedPlay(game) {
   document.querySelectorAll('[data-choice-index]').forEach(button => {
     button.addEventListener('click', () => submitSelfPacedAnswer(Number(button.dataset.choiceIndex)));
   });
-  LQ.setStatus(els.answerStatus, 'Answer correctly to unlock three mystery rewards. No question timer.', '');
+  LQ.setStatus(els.answerStatus, mode.id === 'coin-rush' ? 'Answer correctly to unlock the chest screen.' : 'Answer correctly to unlock three mystery rewards. No question timer.', '');
   LQ.showScreen('question');
 }
 
@@ -542,7 +682,7 @@ function updateSelfPacedTopbar(player, mode, goal) {
   if (els.playerMode) els.playerMode.innerHTML = LQ.modeLogoMarkup(mode, 'mode-logo-chip player-mode-logo');
   if (els.playerCoins) {
     els.playerCoins.textContent = mode.id === 'coin-rush'
-      ? `Vault ${LQ.formatScore(player.coins || 0)} gold • Goal ${LQ.formatScore(goal)}`
+      ? `Gold Rush • Goal ${LQ.formatScore(goal)}`
       : `${formatPlayerModeStat(player, mode.id)} · Goal ${LQ.formatScore(goal)} ${objectiveUnit(mode.id)}`;
   }
 }
@@ -601,6 +741,10 @@ async function submitSelfPacedAnswer(choiceIndex) {
   if (correct && SELF_PACED_MODES.has(game.settings?.gameMode || 'coin-rush')) {
     localChestQuestionKey = questionKey;
     localChestChoiceIndex = choiceIndex;
+    if ((game.settings?.gameMode || 'coin-rush') === 'coin-rush') {
+      goldRushFlowStage = 'chest';
+      setGoldRushStage('chest');
+    }
     renderChestChoices(game.settings?.gameMode || 'coin-rush', qIndex, choiceIndex);
     LQ.setStatus(els.answerStatus, 'Correct — pick one reward chest.', 'ok');
     return;
@@ -632,8 +776,9 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
   els.playerAnswers.innerHTML = '';
   els.chestPanel.classList.remove('hidden');
   const title = modeId === 'cadet-race' ? 'Choose a route card' : modeId === 'power-battle' ? 'Choose a tactical crate' : 'Choose a Gold Rush chest';
+  if (modeId === 'coin-rush') setGoldRushStage('chest');
   const subtitle = modeId === 'coin-rush'
-    ? 'Pick one chest. Rewards can add gold, triple your reward, steal a percentage from another player, raid the room, or cost a percentage of your vault.'
+    ? 'Pick one mystery chest.'
     : modeId === 'cadet-race'
       ? 'Pick one of the three route cards. It can move you forward, boost you, swap positions, or slow you down.'
       : 'Pick one of the three tactical crates. It can add power, shield you, heal you, steal power, or overload.';
@@ -644,6 +789,7 @@ function renderChestChoices(modeId, questionIndex, choiceIndex) {
       ${modeId === 'cadet-race' ? assetImage(RACE_IMAGES.track, 'Cadet Race track', 'race-intro-track') : ''}
       <h2>${LQ.escapeHtml(title)}</h2>
       <p>${LQ.escapeHtml(subtitle)}</p>
+      ${modeId === 'coin-rush' ? '<p class="gold-screen-help">Tap one chest. The others will disappear.</p>' : ''}
     </div>
     <div class="chest-grid ${modeId === 'coin-rush' ? 'gold-chest-grid' : modeId === 'cadet-race' ? 'race-route-grid' : ''}">
       ${[0, 1, 2].map(i => renderRewardChoiceButton(modeId, questionIndex, choiceIndex, i)).join('')}
@@ -797,7 +943,7 @@ function reactionSort(a, b) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-autoflow-v2`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-gold-rush-separated-v1`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 
@@ -923,12 +1069,19 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
   const requestId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   localChestQuestionKey = '';
   localChestChoiceIndex = -1;
-  if (els.chestPanel) {
-    const modeId = liveGame.settings?.gameMode || 'coin-rush';
-    const openingClass = modeId === 'cadet-race' ? 'race-opening' : modeId === 'coin-rush' ? 'gold-rush-opening' : '';
-    const openingLogo = modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : '';
-    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : modeId === 'coin-rush' ? assetImage(GOLD_RUSH_IMAGES.open, 'Gold Rush chest', 'opening-chest-img') : '<div class="loader small-loader"></div>';
-    const openingText = modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Gold Rush is resolving your reward.';
+  goldRushFlowStage = 'question';
+  goldRushChosenChestIndex = -1;
+  goldRushLastTapAt = 0;
+  goldRushChosenChestIndex = chestIndex;
+  const modeId = liveGame.settings?.gameMode || 'coin-rush';
+  if (modeId === 'coin-rush') {
+    goldRushFlowStage = 'opening';
+    renderGoldRushChestOpening(questionIndex, choiceIndex, chestIndex);
+  } else if (els.chestPanel) {
+    const openingClass = modeId === 'cadet-race' ? 'race-opening' : '';
+    const openingLogo = modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : '';
+    const openingArt = modeId === 'cadet-race' ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img') : '<div class="loader small-loader"></div>';
+    const openingText = modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Resolving your reward.';
     els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${openingClass}">${openingLogo}${openingArt}<h2>Opening reward…</h2><p>${openingText}</p></div>`;
   }
   try {
@@ -953,19 +1106,28 @@ async function chooseRewardChest(questionIndex, choiceIndex, chestIndex) {
 function renderOpeningReward(modeId) {
   els.playerAnswers.innerHTML = '';
   if (els.nextSelfQuestion) els.nextSelfQuestion.classList.add('hidden');
+  if (modeId === 'coin-rush') setGoldRushStage('opening');
   if (els.chestPanel) {
     els.chestPanel.classList.remove('hidden');
-    const art = modeId === 'coin-rush'
-      ? assetImage(GOLD_RUSH_IMAGES.open, 'Opening chest', 'opening-chest-img')
-      : modeId === 'cadet-race'
-        ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img')
-        : '<div class="loader small-loader"></div>';
-    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'coin-rush' ? 'gold-rush-opening' : modeId === 'cadet-race' ? 'race-opening' : ''}">${modeId === 'coin-rush' ? LQ.modeLogoMarkup('coin-rush', 'mode-logo-chip chest-mode-logo') : modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'coin-rush' ? 'Your Gold Rush chest is being opened.' : modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Your game reward is being resolved.'}</p></div>`;
+    if (modeId === 'coin-rush') {
+      const chosen = goldRushChosenChestIndex >= 0 ? goldRushChosenChestIndex : 0;
+      renderGoldRushChestOpening(0, 0, chosen);
+      LQ.setStatus(els.answerStatus, 'Opening reward…', '');
+      return;
+    }
+    const art = modeId === 'cadet-race'
+      ? assetImage(RACE_IMAGES.car, 'Cadet Race car', 'opening-race-img')
+      : '<div class="loader small-loader"></div>';
+    els.chestPanel.innerHTML = `<div class="chest-opening chest-opening-art ${modeId === 'cadet-race' ? 'race-opening' : ''}">${modeId === 'cadet-race' ? LQ.modeLogoMarkup('cadet-race', 'mode-logo-chip chest-mode-logo') : ''}${art}<h2>Opening reward…</h2><p>${modeId === 'cadet-race' ? 'Cadet Race is checking your route.' : 'Your game reward is being resolved.'}</p></div>`;
   }
   LQ.setStatus(els.answerStatus, 'Opening reward…', '');
 }
 
 function renderSelfPacedResult(player, modeId) {
+  if (modeId === 'coin-rush' && liveGame) {
+    renderGoldRushResultScreen(liveGame, player);
+    return;
+  }
   els.playerAnswers.innerHTML = '';
   const correct = Boolean(player.lastCorrect);
   const gain = formatPlayerGain(player, modeId);
@@ -995,6 +1157,9 @@ async function nextSelfPacedQuestion() {
   const nextIndex = Number(me.selfQuestionIndex || 0) + 1;
   localChestQuestionKey = '';
   localChestChoiceIndex = -1;
+  goldRushFlowStage = 'question';
+  goldRushChosenChestIndex = -1;
+  goldRushLastTapAt = 0;
   await update(ref(db, `${GAME_ROOT}/${joinedPin}/players/${uid}`), {
     selfQuestionIndex: nextIndex,
     resultReady: false,
