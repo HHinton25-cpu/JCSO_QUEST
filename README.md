@@ -39,3 +39,7 @@ This build removes the large proof/mockup images from live Power Battle gameplay
 
 ## Power Battle automatic flow update
 Power Battle now uses a separate matchup/countdown screen before the question appears, reveals the question after the countdown, automatically resolves once active players answer or time expires, shows results for 10 seconds, then automatically launches the next randomized matchup. The host screen is display-only for matchups, standings, and final podium.
+
+
+## Power Battle auto-flow v2
+Fixes readability, restores a safer host display board, and corrects the automatic reveal/next-question flow using the actual Firebase `state.phase` and `answers/questionIndex` paths.

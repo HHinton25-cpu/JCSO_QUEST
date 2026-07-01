@@ -36,43 +36,43 @@ const POWER_BATTLE_RESULT_MS = 10000;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 const DEFAULT_GOAL_LIMITS = { 'coin-rush': 10000, 'cadet-race': 500, 'power-battle': 5 };
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v1',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v1',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v1',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v1',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v1',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v1',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v1',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v1',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v1',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v1',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v1',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v1',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v1',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v2',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v2',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v2',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v2',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v2',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v2',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v2',
+  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v2',
+  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v2',
+  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v2',
+  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v2',
+  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v2',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v2',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v2'
 };
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v1',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v1'
+  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v2',
+  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v2',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v2'
 };
 let processingRewardRequests = new Set();
 let endingInProgress = false;
@@ -215,7 +215,7 @@ function renderModePreview() {
         ? ['Power Battle', 'Simultaneous matchups', '5 lives decide the winner']
         : ['Self-paced game', 'No question timer', 'Goal or time limit'];
     els.selectedModeCard.innerHTML = `
-      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-power-battle-autoflow-v1" alt="" loading="lazy" decoding="async" />
+      <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-power-battle-autoflow-v2" alt="" loading="lazy" decoding="async" />
       <div>
         <p class="eyebrow">Selected mode</p>
         <h2>${LQ.escapeHtml(mode.name)}</h2>
@@ -1403,6 +1403,7 @@ function formatLeaderboardDetail(p, modeId) {
 
 
 
+
 function renderPowerBattlePodium(game) {
   const ranked = rankPlayersForMode(game.players || {}, 'power-battle').slice(0, 3);
   if (!ranked.length) return '<p class="muted">No final podium yet.</p>';
@@ -1418,53 +1419,60 @@ function renderPowerBattlePodium(game) {
 }
 
 function renderNativePowerBattleBoard(game, players, startingLives, pairs) {
-  const active = players.filter(p => Number(p.health ?? startingLives) > 0);
-  const eliminated = players.filter(p => Number(p.health ?? startingLives) <= 0);
-  const leaders = battleReactionLeaders(game, 5);
-  const pairRows = [];
-  const seen = new Set();
-  active.forEach(player => {
-    if (seen.has(player.uid)) return;
-    const oppUid = pairs[player.uid];
-    const opponent = oppUid ? (game.players || {})[oppUid] : null;
-    seen.add(player.uid);
-    if (oppUid) seen.add(oppUid);
-    pairRows.push(`<div class="pb-host-matchup-row">
-      <div>${LQ.avatarMarkup(player, 'avatar-img tiny-avatar-img')}<strong>${LQ.escapeHtml(player.name || 'Player')}</strong></div>
-      <span class="pb-host-vs">VS</span>
-      <div>${opponent ? LQ.avatarMarkup(opponent, 'avatar-img tiny-avatar-img') : '<span class="pb-bye-star host">★</span>'}<strong>${LQ.escapeHtml(opponent?.name || 'Bye')}</strong></div>
-    </div>`);
-  });
-  return `
-    <div class="pb-host-native-board">
-      <div class="pb-host-board-header">
-        ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
-        <div>
-          <h2>Host Live Matchup Board</h2>
-          <p>Round ${Number(game.state?.questionIndex || 0) + 1} · ${active.length} players alive</p>
+  try {
+    const allPlayers = Object.entries(game.players || {}).map(([playerUid, player]) => ({ uid: playerUid, ...player })).filter(p => p.name);
+    const alive = allPlayers.filter(p => Number(p.health ?? startingLives) > 0);
+    const eliminated = allPlayers.filter(p => Number(p.health ?? startingLives) <= 0);
+    const leaders = battleReactionLeaders(game, 5);
+    const seen = new Set();
+    const pairRows = alive.map(player => {
+      if (seen.has(player.uid)) return '';
+      const oppUid = pairs?.[player.uid] || '';
+      const opponent = oppUid ? (game.players || {})[oppUid] : null;
+      seen.add(player.uid);
+      if (oppUid) seen.add(oppUid);
+      return `<div class="pb-host-matchup-row">
+        <div>${LQ.avatarMarkup(player, 'avatar-img tiny-avatar-img')}<strong>${LQ.escapeHtml(player.name || 'Player')}</strong></div>
+        <span class="pb-host-vs">VS</span>
+        <div>${opponent ? LQ.avatarMarkup(opponent, 'avatar-img tiny-avatar-img') : '<span class="pb-bye-star host">★</span>'}<strong>${LQ.escapeHtml(opponent?.name || 'Bye')}</strong></div>
+      </div>`;
+    }).filter(Boolean);
+
+    return `
+      <div class="pb-host-native-board">
+        <div class="pb-host-board-header">
+          ${LQ.modeLogoMarkup('power-battle', 'mode-logo-chip pb-native-logo')}
+          <div>
+            <h2>Host Live Matchup Board</h2>
+            <p>Round ${Number(game.state?.questionIndex || 0) + 1} · ${alive.length} players alive</p>
+          </div>
+          <div class="pb-host-timer">${Math.max(0, Math.ceil((Number(game.state?.endsAt || Date.now()) - Date.now()) / 1000))}</div>
         </div>
-        <div class="pb-host-timer">${Math.max(0, Math.ceil((Number(game.state?.endsAt || Date.now()) - Date.now()) / 1000))}</div>
-      </div>
-      <div class="pb-host-board-grid">
-        <section class="pb-host-panel active-matchups">
-          <h3>Active Matchups</h3>
-          <div class="pb-host-matchup-list">${pairRows.join('') || '<p class="muted">No active matchups yet.</p>'}</div>
-        </section>
-        <section class="pb-host-panel remaining-players">
-          <h3>Remaining Players</h3>
-          <div class="pb-host-player-list">${active.map(p => renderBattlePlayerRow(p, startingLives, pairs, game.players || {})).join('') || '<p class="muted">No players remaining.</p>'}</div>
-        </section>
-        <section class="pb-host-panel eliminated-players">
-          <h3>Eliminated</h3>
-          <div class="pb-host-mini-list">${eliminated.map(p => `<span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')} ${LQ.escapeHtml(p.name || 'Player')}</span>`).join('') || '<span>None yet</span>'}</div>
-        </section>
-        <section class="pb-host-panel reaction-leaders">
-          <h3>Fastest Reactions</h3>
-          <div class="pb-host-mini-list">${leaders.map((p, i) => `<span><b>#${i + 1}</b> ${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')} ${LQ.escapeHtml(p.name || 'Player')} · ${formatReactionTime(p.bestReactionMs)}</span>`).join('') || '<span>No correct times yet</span>'}</div>
-        </section>
-      </div>
-    </div>`;
+        <div class="pb-host-board-grid">
+          <section class="pb-host-panel active-matchups">
+            <h3>Active Matchups</h3>
+            <div class="pb-host-matchup-list">${pairRows.join('') || '<p class="pb-empty">Waiting for matchups…</p>'}</div>
+          </section>
+          <section class="pb-host-panel remaining-players">
+            <h3>Leaderboard</h3>
+            <div class="pb-host-player-list">${rankPlayersForMode(game.players || {}, 'power-battle').map(p => renderBattlePlayerRow(p, startingLives, pairs, game.players || {})).join('') || '<p class="pb-empty">No players yet.</p>'}</div>
+          </section>
+          <section class="pb-host-panel eliminated-players">
+            <h3>Eliminated</h3>
+            <div class="pb-host-mini-list">${eliminated.map(p => `<span>${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')} ${LQ.escapeHtml(p.name || 'Player')}</span>`).join('') || '<span>None yet</span>'}</div>
+          </section>
+          <section class="pb-host-panel reaction-leaders">
+            <h3>Fastest Reactions</h3>
+            <div class="pb-host-mini-list">${leaders.map((p, i) => `<span><b>#${i + 1}</b> ${LQ.avatarMarkup(p, 'avatar-img tiny-avatar-img')} ${LQ.escapeHtml(p.name || 'Player')} · ${formatReactionTime(p.bestReactionMs)}</span>`).join('') || '<span>No correct times yet</span>'}</div>
+          </section>
+        </div>
+      </div>`;
+  } catch (err) {
+    console.error('Power Battle board render failed', err);
+    return `<div class="pb-host-native-board"><h2>Power Battle</h2><p class="pb-empty">Board is loading…</p></div>`;
+  }
 }
+
 
 function renderModeStatus(game) {
   if (!els.modeStatusPanel) return;
@@ -1603,13 +1611,19 @@ function renderFinalModeSummary(game) {
 }
 
 
+
+function getActivePowerBattleUids(game) {
+  return Object.entries(game?.players || {})
+    .filter(([playerUid, player]) => player && player.name && Number(player.health ?? BATTLE_START_HEALTH) > 0)
+    .map(([playerUid]) => playerUid);
+}
+
 function isPowerBattleAutoDone(game) {
-  const modeId = game?.settings?.gameMode || 'classic';
-  if (modeId !== 'power-battle') return false;
-  const active = Object.values(game?.players || {}).filter(player => player && player.name && Number(player.health ?? BATTLE_START_HEALTH) > 0);
-  const questionIndex = Number(game?.state?.questionIndex || 0);
-  const totalQuestions = Number(game?.settings?.questionCount || game?.questions?.length || 0);
-  return active.length <= 1 || (totalQuestions && questionIndex >= totalQuestions - 1);
+  if (!game || game.settings?.gameMode !== 'power-battle') return false;
+  const active = getActivePowerBattleUids(game);
+  const questionIndex = Number(game.state?.questionIndex || 0);
+  const totalQuestions = Number(game.state?.questionCount || game.settings?.questionCount || selectedQuestions.length || 0);
+  return active.length <= 1 || (totalQuestions > 0 && questionIndex >= totalQuestions - 1);
 }
 
 function schedulePowerBattleAutoAdvance(game) {
@@ -1617,10 +1631,10 @@ function schedulePowerBattleAutoAdvance(game) {
   if (game.state?.phase !== 'reveal') return;
   if (powerBattleAutoAdvanceId) return;
   const revealedAt = Number(game.reveal?.revealedAt || Date.now());
-  const delay = Math.max(600, POWER_BATTLE_RESULT_MS - (Date.now() - revealedAt));
+  const delay = Math.max(750, POWER_BATTLE_RESULT_MS - (Date.now() - revealedAt));
   powerBattleAutoAdvanceId = setTimeout(async () => {
     powerBattleAutoAdvanceId = null;
-    if (!livePin || !liveGame || liveGame.settings?.gameMode !== 'power-battle' || liveGame.state?.phase !== 'reveal') return;
+    if (!gamePin || !liveGame || liveGame.settings?.gameMode !== 'power-battle' || liveGame.state?.phase !== 'reveal') return;
     if (isPowerBattleAutoDone(liveGame)) {
       await endGame();
       return;
@@ -1630,22 +1644,24 @@ function schedulePowerBattleAutoAdvance(game) {
 }
 
 function maybeResolvePowerBattleEarly(game) {
-  if (!livePin || !game || game.settings?.gameMode !== 'power-battle') return;
+  if (!gamePin || !game || game.settings?.gameMode !== 'power-battle') return;
   if (game.state?.phase !== 'question') return;
-  if (powerBattleResolving) return;
+  if (powerBattleResolving || revealInProgress) return;
   const now = Date.now();
   const startedAt = Number(game.state?.startedAt || now);
   if (now - startedAt < POWER_BATTLE_INTRO_MS) return;
-  const activeUids = Object.entries(game.players || {})
-    .filter(([playerUid, player]) => player && player.name && Number(player.health ?? BATTLE_START_HEALTH) > 0)
-    .map(([playerUid]) => playerUid);
+
+  const activeUids = getActivePowerBattleUids(game);
   if (!activeUids.length) return;
-  const answers = game.answers?.[Number(game.state?.questionIndex || 0)] || {};
+
+  const questionIndex = Number(game.state?.questionIndex || 0);
+  const answers = game.answers?.[questionIndex] || {};
   const questionKey = game.question?.key || '';
   const allAnswered = activeUids.every(playerUid => hasValidAnswer(answers[playerUid], questionKey));
   if (!allAnswered) return;
+
   powerBattleResolving = true;
-  revealQuestion().finally(() => {
+  Promise.resolve(revealQuestion(false)).finally(() => {
     powerBattleResolving = false;
   });
 }

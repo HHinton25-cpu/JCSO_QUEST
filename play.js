@@ -31,52 +31,52 @@ const POWER_BATTLE_INTRO_MS = 3000;
 const SELF_PACED_MODES = new Set(['coin-rush', 'cadet-race']);
 let lastSelfPacedRenderKey = '';
 const BATTLE_IMAGES = {
-  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v1',
-  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v1',
-  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v1',
-  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v1',
-  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v1',
-  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v1',
-  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v1',
-  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v1',
-  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v1',
-  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v1',
-  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v1',
-  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v1',
-  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v1',
-  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v1',
-  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v1',
-  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v1',
-  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v1',
-  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v1'
+  badge: 'jcso-battle-badge-md.png?v=20260630-power-battle-autoflow-v2',
+  shield: 'jcso-effect-shield-md.webp?v=20260630-power-battle-autoflow-v2',
+  attack: 'jcso-effect-attack-md.webp?v=20260630-power-battle-autoflow-v2',
+  speed: 'jcso-effect-speed-md.webp?v=20260630-power-battle-autoflow-v2',
+  elimination: 'jcso-effect-elimination-md.webp?v=20260630-power-battle-autoflow-v2',
+  vs: 'jcso-power-battle-vs-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  result: 'jcso-power-battle-result-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  waiting: 'jcso-power-battle-waiting-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  bye: 'jcso-power-battle-bye-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  eliminated: 'jcso-power-battle-eliminated-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  champion: 'jcso-power-battle-champion-screen-md.webp?v=20260630-power-battle-autoflow-v2',
+  hostBoard: 'jcso-power-battle-host-board-md.webp?v=20260630-power-battle-autoflow-v2',
+  hostResults: 'jcso-power-battle-host-results-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown1: 'jcso-countdown-1-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown2: 'jcso-countdown-2-md.webp?v=20260630-power-battle-autoflow-v2',
+  countdown3: 'jcso-countdown-3-md.webp?v=20260630-power-battle-autoflow-v2',
+  health1: 'jcso-health-1-md.png?v=20260630-power-battle-autoflow-v2',
+  health2: 'jcso-health-2-md.png?v=20260630-power-battle-autoflow-v2',
+  health3: 'jcso-health-3-md.png?v=20260630-power-battle-autoflow-v2',
+  health4: 'jcso-health-4-md.png?v=20260630-power-battle-autoflow-v2',
+  health5: 'jcso-health-5-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeWinner: 'jcso-badge-winner-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeDefeated: 'jcso-badge-defeated-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeBothWrong: 'jcso-badge-both-wrong-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeFastest: 'jcso-badge-fastest-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeLostLife: 'jcso-badge-lost-life-md.png?v=20260630-power-battle-autoflow-v2',
+  badgeBye: 'jcso-badge-bye-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionBest: 'jcso-reaction-best-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionPersonalBest: 'jcso-reaction-personalbest-md.png?v=20260630-power-battle-autoflow-v2',
+  reactionRoundFast: 'jcso-reaction-roundfast-md.png?v=20260630-power-battle-autoflow-v2',
+  playerCard: 'jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v2',
+  timerRing: 'jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v2'
 };
 const GOLD_RUSH_IMAGES = {
-  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-autoflow-v1',
-  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-autoflow-v1',
-  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-autoflow-v1',
-  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-autoflow-v1',
-  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-autoflow-v1',
-  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-autoflow-v1'
+  basic: 'gold-rush-chest-basic-md.png?v=20260630-power-battle-autoflow-v2',
+  rare: 'gold-rush-chest-rare-md.png?v=20260630-power-battle-autoflow-v2',
+  open: 'gold-rush-chest-open-md.png?v=20260630-power-battle-autoflow-v2',
+  coins: 'gold-rush-coin-pile-md.png?v=20260630-power-battle-autoflow-v2',
+  gems: 'gold-rush-gem-pile-md.png?v=20260630-power-battle-autoflow-v2',
+  vault: 'gold-rush-vault-open-md.png?v=20260630-power-battle-autoflow-v2'
 };
 
 const RACE_IMAGES = {
-  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v1',
-  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v1',
-  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v1'
+  track: 'jcso-race-track-md.png?v=20260630-power-battle-autoflow-v2',
+  car: 'jcso-race-car-md.png?v=20260630-power-battle-autoflow-v2',
+  patrol: 'jcso-patrol-unit-md.png?v=20260630-power-battle-autoflow-v2'
 };
 
 const els = {};
@@ -797,7 +797,7 @@ function reactionSort(a, b) {
 }
 
 function assetImage(src, alt, className) {
-  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-autoflow-v1`;
+  const versionedSrc = String(src || '').includes('?') ? src : `${src}?v=20260630-power-battle-autoflow-v2`;
   return `<img class="${LQ.escapeAttr(className || 'asset-img')}" src="${LQ.escapeAttr(versionedSrc)}" alt="${LQ.escapeAttr(alt || '')}" loading="lazy" decoding="async" />`;
 }
 

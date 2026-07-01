@@ -792,7 +792,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Professional cleanup pass: 20260630-power-battle-autoflow-v1 */
+/* Professional cleanup pass: 20260630-power-battle-autoflow-v2 */
 .app-shell, .center-shell, .player-shell {
   padding-top: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-top));
   padding-bottom: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-bottom));
@@ -963,7 +963,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Separate mode-selection flow and self-paced game polish: 20260630-power-battle-autoflow-v1 */
+/* Separate mode-selection flow and self-paced game polish: 20260630-power-battle-autoflow-v2 */
 .mode-select-shell {
   place-items: center;
 }
@@ -1186,7 +1186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Gold Rush polish and safer mobile spacing: 20260630-power-battle-autoflow-v1 */
+/* Gold Rush polish and safer mobile spacing: 20260630-power-battle-autoflow-v2 */
 .app-shell, .center-shell, .player-shell {
   padding-top: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-top) + .85rem));
   padding-bottom: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-bottom) + 1rem));
@@ -1519,7 +1519,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Player-side Gold Rush timer/logo fixes: 20260630-power-battle-autoflow-v1 */
+/* Player-side Gold Rush timer/logo fixes: 20260630-power-battle-autoflow-v2 */
 .player-round-logo {
   display: inline-flex;
   align-items: center;
@@ -1561,7 +1561,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Transparent Gold Rush asset blend fix: 20260630-power-battle-autoflow-v1 */
+/* Transparent Gold Rush asset blend fix: 20260630-power-battle-autoflow-v2 */
 .chest-choice-img,
 .opening-chest-img,
 .result-art-img {
@@ -1573,7 +1573,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   overflow: visible;
 }
 
-/* Cadet Race gameplay asset integration: 20260630-power-battle-autoflow-v1 */
+/* Cadet Race gameplay asset integration: 20260630-power-battle-autoflow-v2 */
 .race-play .player-shell {
   background:
     radial-gradient(circle at 16% 10%, rgba(255,216,77,.26), transparent 24rem),
@@ -1820,7 +1820,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   .race-route-choice strong, .race-route-choice small { text-align: left; }
 }
 
-/* Gold Rush target picker and Battle Royale updates: 20260630-power-battle-autoflow-v1 */
+/* Gold Rush target picker and Battle Royale updates: 20260630-power-battle-autoflow-v2 */
 .steal-target-intro {
   text-align: center;
 }
@@ -1920,7 +1920,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Battle Royale UI asset integration and reaction-time board: 20260630-power-battle-autoflow-v1 */
+/* Battle Royale UI asset integration and reaction-time board: 20260630-power-battle-autoflow-v2 */
 .battle-play .player-topbar {
   background: linear-gradient(135deg, rgba(5, 22, 70, .96), rgba(8, 67, 150, .9));
   color: #fff;
@@ -2186,7 +2186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Power Battle asset integration overrides: 20260630-power-battle-autoflow-v1 */
+/* Power Battle asset integration overrides: 20260630-power-battle-autoflow-v2 */
 .battle-host-board-art {
   width: 100%;
   border-radius: 1.25rem;
@@ -2312,9 +2312,9 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Power Battle ultra polish: 20260630-power-battle-autoflow-v1 */
+/* Power Battle ultra polish: 20260630-power-battle-autoflow-v2 */
 .battle-play .timer-circle {
-  background: center / contain no-repeat url('jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v1');
+  background: center / contain no-repeat url('jcso-ui-timer-ring-md.png?v=20260630-power-battle-autoflow-v2');
   color: #062b72;
   font-weight: 1100;
   box-shadow: 0 12px 28px rgba(0,17,68,.28);
@@ -2345,7 +2345,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   content: '';
   position: absolute;
   inset: 0;
-  background: center / cover no-repeat url('jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v1');
+  background: center / cover no-repeat url('jcso-ui-player-card-empty-md.png?v=20260630-power-battle-autoflow-v2');
   opacity: .10;
   pointer-events: none;
 }
@@ -3233,4 +3233,97 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   .battle-play.battle-intro .pb-native-card {
     min-height: calc(100dvh - 7rem);
   }
+}
+
+
+/* Power Battle v2 readability + host recovery */
+.battle-play .player-topbar,
+.battle-play .player-topbar *,
+.pb-native-card,
+.pb-native-card *,
+.pb-result-native,
+.pb-result-native *,
+.pb-final-native,
+.pb-final-native *,
+.pb-host-native-board,
+.pb-host-native-board *,
+.pb-host-results-native,
+.pb-host-results-native *,
+.pb-host-final-native,
+.pb-host-final-native * {
+  color: #ffffff;
+}
+.battle-play .player-question-card,
+.battle-play .player-question-card * {
+  color: #071b4d !important;
+}
+.battle-play .player-question-card .eyebrow {
+  color: #0647a8 !important;
+}
+.pb-fighter small,
+.pb-result-player span,
+.pb-host-info span,
+.pb-host-stats span,
+.pb-host-stats small,
+.pb-host-board-header p,
+.pb-host-results-header p,
+.pb-host-final-native p,
+.pb-podium-place span,
+.pb-podium-place small,
+.pb-empty {
+  color: rgba(255,255,255,.94) !important;
+}
+.pb-native-status,
+.pb-result-note,
+.pb-host-panel,
+.pb-host-matchup-row,
+.pb-host-player,
+.pb-host-mini-list span,
+.pb-result-chip {
+  background: rgba(1, 11, 47, .72) !important;
+  border-color: rgba(255,255,255,.28) !important;
+}
+.pb-native-status span,
+.pb-host-vs,
+.pb-host-stats b,
+.pb-podium-medal {
+  color: #ffe66d !important;
+}
+.pb-fighter,
+.pb-result-player {
+  background: rgba(1, 11, 47, .58) !important;
+}
+.pb-health-img,
+.pb-host-health {
+  background: rgba(255,255,255,.92);
+  border-radius: .55rem;
+  padding: .12rem;
+}
+.pb-host-player strong,
+.pb-host-matchup-row strong,
+.pb-podium-place strong,
+.pb-result-player strong,
+.pb-fighter strong {
+  color: #fff !important;
+  text-shadow: 0 2px 5px rgba(0,0,0,.42);
+}
+.pb-badge-img {
+  background: rgba(255,255,255,.92);
+  border-radius: .55rem;
+  padding: .1rem;
+}
+.mode-event-chip,
+.reaction-podium,
+.reaction-podium * {
+  color: #071b4d !important;
+}
+#mode-status-panel:empty::before,
+#live-mode-status-panel:empty::before {
+  content: "Power Battle board loading…";
+  display: block;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(255,255,255,.92);
+  color: #071b4d;
+  font-weight: 900;
 }
