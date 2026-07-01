@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Choose Game Mode | JCSO Quest</title>
   <meta name="description" content="Choose a JCSO Quest game mode before setting up a host game." />
-  <link rel="icon" href="favicon.ico?v=20260630-gold-rush-separated-v1" sizes="any" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-gold-rush-separated-v1" />
+  <link rel="icon" href="favicon.ico?v=20260630-gold-rush-stability-v2" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260630-gold-rush-stability-v2" />
   <meta name="theme-color" content="#062B72" />
-  <link rel="stylesheet" href="styles.css?v=20260630-gold-rush-separated-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260630-gold-rush-stability-v2" />
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
   <main class="center-shell mode-select-shell">
     <section class="hero-card mode-select-hero">
       <div class="mode-select-header">
-        <img class="mode-select-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-gold-rush-separated-v1" alt="JCSO Quest" />
+        <img class="mode-select-logo" src="jcso-quest-wordmark-header-md.png?v=20260630-gold-rush-stability-v2" alt="JCSO Quest" />
         <div>
           <p class="eyebrow">Host setup</p>
           <h1>Choose a Game Mode</h1>
@@ -29,7 +29,7 @@
       </div>
     </section>
   </main>
-  <script src="common.js?v=20260630-gold-rush-separated-v1"></script>
+  <script src="common.js?v=20260630-gold-rush-stability-v2"></script>
   <script>
     (() => {
       const LQ = window.LiveQuiz;
@@ -46,7 +46,7 @@
         const gameLabel = mode.id === 'classic' ? 'Classic quiz' : mode.id === 'power-battle' ? 'Power Battle' : 'Self-paced game';
         return `
           <a class="mode-select-card mode-${LQ.escapeAttr(mode.id)}" href="host.html?mode=${encodeURIComponent(mode.id)}" aria-label="Host ${LQ.escapeAttr(mode.name)}">
-            <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-gold-rush-separated-v1" alt="" loading="lazy" decoding="async" />
+            <img src="${LQ.escapeAttr(mode.image || '')}?v=20260630-gold-rush-stability-v2" alt="" loading="lazy" decoding="async" />
             <div class="mode-select-card-body">
               <p class="eyebrow">${gameLabel}</p>
               <h2 class="mode-card-title-logo">${LQ.modeLogoMarkup(mode, 'mode-logo-chip mode-logo-inline')} <span>${LQ.escapeHtml(mode.name)}</span></h2>

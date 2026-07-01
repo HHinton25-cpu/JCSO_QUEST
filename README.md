@@ -53,3 +53,10 @@ Gold Rush player UI now uses separate screens/phases to avoid overcrowding and s
 - reward result screen
 - leaderboard screen
 Players double-tap the reward result to show the leaderboard, then double-tap the leaderboard to continue to the next question.
+
+
+## Gold Rush stability v2
+- Result and leaderboard instructions now say tap instead of double-tap.
+- Steal chests open a dedicated target-selection screen.
+- Gold changes from other players no longer force full screen re-renders.
+- If someone steals from you or your gold changes, a small notification popup appears instead of jumping the screen.

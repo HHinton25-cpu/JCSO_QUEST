@@ -792,7 +792,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Professional cleanup pass: 20260630-gold-rush-separated-v1 */
+/* Professional cleanup pass: 20260630-gold-rush-stability-v2 */
 .app-shell, .center-shell, .player-shell {
   padding-top: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-top));
   padding-bottom: calc(clamp(1rem, 2vw, 2rem) + env(safe-area-inset-bottom));
@@ -963,7 +963,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Separate mode-selection flow and self-paced game polish: 20260630-gold-rush-separated-v1 */
+/* Separate mode-selection flow and self-paced game polish: 20260630-gold-rush-stability-v2 */
 .mode-select-shell {
   place-items: center;
 }
@@ -1186,7 +1186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Gold Rush polish and safer mobile spacing: 20260630-gold-rush-separated-v1 */
+/* Gold Rush polish and safer mobile spacing: 20260630-gold-rush-stability-v2 */
 .app-shell, .center-shell, .player-shell {
   padding-top: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-top) + .85rem));
   padding-bottom: max(clamp(1rem, 2vw, 2rem), calc(env(safe-area-inset-bottom) + 1rem));
@@ -1519,7 +1519,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Player-side Gold Rush timer/logo fixes: 20260630-gold-rush-separated-v1 */
+/* Player-side Gold Rush timer/logo fixes: 20260630-gold-rush-stability-v2 */
 .player-round-logo {
   display: inline-flex;
   align-items: center;
@@ -1561,7 +1561,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Transparent Gold Rush asset blend fix: 20260630-gold-rush-separated-v1 */
+/* Transparent Gold Rush asset blend fix: 20260630-gold-rush-stability-v2 */
 .chest-choice-img,
 .opening-chest-img,
 .result-art-img {
@@ -1573,7 +1573,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   overflow: visible;
 }
 
-/* Cadet Race gameplay asset integration: 20260630-gold-rush-separated-v1 */
+/* Cadet Race gameplay asset integration: 20260630-gold-rush-stability-v2 */
 .race-play .player-shell {
   background:
     radial-gradient(circle at 16% 10%, rgba(255,216,77,.26), transparent 24rem),
@@ -1820,7 +1820,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   .race-route-choice strong, .race-route-choice small { text-align: left; }
 }
 
-/* Gold Rush target picker and Battle Royale updates: 20260630-gold-rush-separated-v1 */
+/* Gold Rush target picker and Battle Royale updates: 20260630-gold-rush-stability-v2 */
 .steal-target-intro {
   text-align: center;
 }
@@ -1920,7 +1920,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   }
 }
 
-/* Battle Royale UI asset integration and reaction-time board: 20260630-gold-rush-separated-v1 */
+/* Battle Royale UI asset integration and reaction-time board: 20260630-gold-rush-stability-v2 */
 .battle-play .player-topbar {
   background: linear-gradient(135deg, rgba(5, 22, 70, .96), rgba(8, 67, 150, .9));
   color: #fff;
@@ -2186,7 +2186,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Power Battle asset integration overrides: 20260630-gold-rush-separated-v1 */
+/* Power Battle asset integration overrides: 20260630-gold-rush-stability-v2 */
 .battle-host-board-art {
   width: 100%;
   border-radius: 1.25rem;
@@ -2312,9 +2312,9 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
 }
 
 
-/* Power Battle ultra polish: 20260630-gold-rush-separated-v1 */
+/* Power Battle ultra polish: 20260630-gold-rush-stability-v2 */
 .battle-play .timer-circle {
-  background: center / contain no-repeat url('jcso-ui-timer-ring-md.png?v=20260630-gold-rush-separated-v1');
+  background: center / contain no-repeat url('jcso-ui-timer-ring-md.png?v=20260630-gold-rush-stability-v2');
   color: #062b72;
   font-weight: 1100;
   box-shadow: 0 12px 28px rgba(0,17,68,.28);
@@ -2345,7 +2345,7 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   content: '';
   position: absolute;
   inset: 0;
-  background: center / cover no-repeat url('jcso-ui-player-card-empty-md.png?v=20260630-gold-rush-separated-v1');
+  background: center / cover no-repeat url('jcso-ui-player-card-empty-md.png?v=20260630-gold-rush-stability-v2');
   opacity: .10;
   pointer-events: none;
 }
@@ -3559,4 +3559,105 @@ select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px 
   .gold-rush-play .gold-rush-leader-row > span:last-child {
     grid-column: 3;
   }
+}
+
+
+/* Gold Rush stability v2: less flashing, single-tap flow, clear steal/notice screens */
+.gold-rush-play.gold-stage-target .player-question-card,
+.gold-rush-play.gold-stage-target .player-answers,
+.gold-rush-play.gold-stage-target .player-topbar {
+  display: none !important;
+}
+.gold-rush-play.gold-stage-target #question-screen {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+}
+.gold-steal-target-screen .opening-chest-img {
+  width: min(42vw, 8rem);
+  max-height: 7rem;
+  object-fit: contain;
+  margin-inline: auto;
+}
+.gold-steal-target-screen .steal-target-grid {
+  margin-top: .9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .7rem;
+}
+.gold-steal-target-screen .steal-target-card {
+  min-height: 8.5rem;
+  display: grid;
+  justify-items: center;
+  gap: .25rem;
+  padding: .75rem;
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, #fffefa, #fff0ad);
+  border: 2px solid rgba(255,209,48,.8);
+  color: #3a2700;
+  box-shadow: 0 12px 22px rgba(86,55,0,.16);
+}
+.gold-steal-target-screen .steal-target-card *,
+.gold-steal-target-screen .primary-btn {
+  color: #3a2700 !important;
+}
+.gold-steal-target-screen .target-avatar .avatar-img,
+.gold-steal-target-screen .target-avatar img {
+  width: 3.2rem;
+  height: 3.2rem;
+  object-fit: contain;
+}
+.gold-rush-notice {
+  position: fixed;
+  left: 50%;
+  top: max(1rem, env(safe-area-inset-top));
+  transform: translate(-50%, -130%);
+  z-index: 9999;
+  width: min(calc(100vw - 1.5rem), 24rem);
+  padding: .85rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #fffefa, #ffe98f);
+  border: 3px solid rgba(255,209,48,.9);
+  box-shadow: 0 18px 34px rgba(55,32,0,.28);
+  color: #352400;
+  text-align: center;
+  opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
+  pointer-events: none;
+}
+.gold-rush-notice.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+.gold-rush-notice strong,
+.gold-rush-notice span {
+  display: block;
+  color: #352400 !important;
+}
+.gold-rush-notice strong {
+  font-weight: 1100;
+  margin-bottom: .15rem;
+}
+.gold-rush-notice.danger {
+  background: linear-gradient(180deg, #fffafa, #ffd0c7);
+  border-color: rgba(255,84,64,.85);
+}
+.gold-rush-notice.gain {
+  background: linear-gradient(180deg, #f8fff8, #caffd4);
+  border-color: rgba(36,189,84,.85);
+}
+.gold-rush-play .gold-screen-help {
+  cursor: pointer;
+}
+.gold-rush-play .gold-result-screen,
+.gold-rush-play .gold-leaderboard-screen {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gold-rush-play #question-screen {
+  scroll-margin-top: 0;
+}
+.gold-rush-play .screen {
+  overscroll-behavior: contain;
 }
